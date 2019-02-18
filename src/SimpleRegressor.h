@@ -32,87 +32,86 @@
 #include "propts.h"
 #include "structs.h"
 
-class SimpleRegressor
-{
-public:
-    SimpleRegressor() = default;
-    SimpleRegressor(const SimpleRegressor&) = default;
-    SimpleRegressor(SimpleRegressor&&) = default;
+namespace prlearn {
 
-    avg_t lookup(size_t label, const double*, size_t dimen) const
-    {
-        el_t lf(label);
-        
-        auto res = std::lower_bound(std::begin(_labels), std::end(_labels), lf);
-        
-        if(res != std::end(_labels) && res->_label == label) 
-            return res->_value;
-        else 
-            return avg_t{std::numeric_limits<double>::quiet_NaN(), 0};
-    }
-    
-    double getBestQ(const double*, bool minimization) const
-    {
-        double res = std::numeric_limits<double>::infinity();
-        if(!minimization)
-            res = -res;
-        for(auto& e : _labels)
-            if(!std::isinf(e._value._avg) && !std::isnan(e._value._avg))
-                res = minimization ? 
-                    std::min(res, e._value._avg) :
-                    std::max(res, e._value._avg) ;
-        return res;
-    }
-    
-    void update(size_t label, const double*, size_t dimen, double nval, const double delta, const propts_t& options)
-    {
-        el_t lf(label);
-        
-        auto res = std::lower_bound(std::begin(_labels), std::end(_labels), lf);
-        
-        if(res == std::end(_labels) || res->_label != label) 
-            res = _labels.insert(res, lf);
-        res->_value._cnt = std::min<size_t>(res->_value._cnt, options._q_learn_rate);
-        res->_value += nval;
-        assert(res->_value._avg >= 0);
-    }
-        
-    void print(std::ostream& s, size_t tabs, std::map<size_t,size_t>& label_map) const
-    {
-        for(size_t i = 0; i < tabs; ++i) s << "\t";
-        s << "{";
-        bool first = true;
-        for(auto& w : _labels)
-        {
-            if(!first) s << ",";
-            first = false;
-            s << "\n";
-            for(size_t t = 0; t < tabs; ++t) s << "\t";
-            s << "\"" << label_map[w._label] << "\" : " << w._value._avg;
-        }        
-        s << "\n";
-        for(size_t i = 0; i < tabs; ++i) s << "\t";
-        s << "}";          
-    }
+    class SimpleRegressor {
+    public:
+        SimpleRegressor() = default;
+        SimpleRegressor(const SimpleRegressor&) = default;
+        SimpleRegressor(SimpleRegressor&&) = default;
 
-protected:
-    struct el_t { 
-        el_t(size_t label) : _label(label) {};
-        el_t(size_t label, double d) : _label(label) 
-        {
-            _value += d;
-        };
-        size_t _label;
-        avg_t _value;
-        bool operator<(const el_t& other) const
-        {
-            return _label < other._label;
+        avg_t lookup(size_t label, const double*, size_t dimen) const {
+            el_t lf(label);
+
+            auto res = std::lower_bound(std::begin(_labels), std::end(_labels), lf);
+
+            if (res != std::end(_labels) && res->_label == label)
+                return res->_value;
+            else
+                return avg_t{std::numeric_limits<double>::quiet_NaN(), 0};
         }
+
+        double getBestQ(const double*, bool minimization) const {
+            double res = std::numeric_limits<double>::infinity();
+            if (!minimization)
+                res = -res;
+            for (auto& e : _labels)
+                if (!std::isinf(e._value._avg) && !std::isnan(e._value._avg))
+                    res = minimization ?
+                        std::min(res, e._value._avg) :
+                    std::max(res, e._value._avg);
+            return res;
+        }
+
+        void update(size_t label, const double*, size_t dimen, double nval, const double delta, const propts_t& options) {
+            el_t lf(label);
+
+            auto res = std::lower_bound(std::begin(_labels), std::end(_labels), lf);
+
+            if (res == std::end(_labels) || res->_label != label)
+                res = _labels.insert(res, lf);
+            res->_value._cnt = std::min<size_t>(res->_value._cnt, options._q_learn_rate);
+            res->_value += nval;
+            assert(res->_value._avg >= 0);
+        }
+
+        void print(std::ostream& s, size_t tabs, std::map<size_t, size_t>& label_map) const {
+            for (size_t i = 0; i < tabs; ++i) s << "\t";
+            s << "{";
+            bool first = true;
+            for (auto& w : _labels) {
+                if (!first) s << ",";
+                first = false;
+                s << "\n";
+                for (size_t t = 0; t < tabs; ++t) s << "\t";
+                s << "\"" << label_map[w._label] << "\" : " << w._value._avg;
+            }
+            s << "\n";
+            for (size_t i = 0; i < tabs; ++i) s << "\t";
+            s << "}";
+        }
+
+    protected:
+
+        struct el_t {
+
+            el_t(size_t label) : _label(label) {
+            };
+
+            el_t(size_t label, double d) : _label(label) {
+                _value += d;
+            };
+            size_t _label;
+            avg_t _value;
+
+            bool operator<(const el_t& other) const {
+                return _label < other._label;
+            }
+        };
+        std::vector<el_t> _labels;
+
     };
-    std::vector<el_t> _labels;
 
-};
-
-
+}
 #endif /* SIMPLEREGRESSOR_H */
 

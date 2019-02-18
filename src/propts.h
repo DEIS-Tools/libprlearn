@@ -26,22 +26,23 @@
 #define PROPTS_H
 
 #include <cstddef>
+namespace prlearn {
+    // primed for Q-learning
 
-// primed for Q-learning
-struct propts_t {
-    size_t _q_learn_rate = 2; // only QLearning
-    double _upper_t = 1.75;
-    double _lower_t = 0.15;
-    double _ks_limit = 0.25;
-    // the filter can be disabled (_filter_rate = 1) for MLearning
-    // We recommend, however, a high filter-value (_filter_rate = 0.95).
-    double _filter_rate = 0.02;
-    // Can probably be omitted
-    double _filter_val = 0.99;
-    double _discount = 0.99;
-    double _indefference = 0.005;
-};
-
+    struct propts_t {
+        size_t _q_learn_rate = 2; // only QLearning
+        double _upper_t = 1.75;
+        double _lower_t = 0.15;
+        double _ks_limit = 0.25;
+        // the filter can be disabled (_filter_rate = 1) for MLearning
+        // We recommend, however, a high filter-value (_filter_rate = 0.95).
+        double _filter_rate = 0.02;
+        // Can probably be omitted
+        double _filter_val = 0.99;
+        double _discount = 0.99;
+        double _indefference = 0.005;
+    };
+}
 
 #endif /* PROPTS_H */
 
