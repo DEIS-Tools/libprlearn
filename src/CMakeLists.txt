@@ -6,3 +6,15 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 add_library(prlearn ${HEADER_FILES} MLearning.cpp SimpleMLearning.cpp RefinementTree.cpp structs.cpp)
 target_include_directories (prlearn PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+install(TARGETS prlearn 
+	LIBRARY DESTINATION lib 
+	ARCHIVE DESTINATION lib)
+install (FILES  MLearning.h
+		propts.h
+		QLearning.h
+		RefinementTree.h
+		SimpleMLearning.h
+		SimpleRegressor.h
+		structs.h
+	DESTINATION include/prlearn)

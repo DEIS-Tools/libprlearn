@@ -29,9 +29,8 @@
 #include <vector>
 #include <map>
 
-#include "avg.h"
-#include "statmc/propts.h"
-
+#include "propts.h"
+#include "structs.h"
 
 class SimpleRegressor
 {
