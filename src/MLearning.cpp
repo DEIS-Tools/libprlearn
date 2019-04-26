@@ -165,14 +165,14 @@ namespace prlearn {
             _nodes[rnd].update(rnd, minimization, clouds, _nodes, dimen, false, delta, options);
     }
 
-    std::pair<double, double> MLearning::lookup(size_t label, const double* f_var, size_t dimen) const {
+    qvar_t MLearning::lookup(size_t label, const double* f_var, size_t dimen) const {
         for (auto& el : _mapping) {
             if (el._label == label) {
                 auto n = _nodes[el._nid].find_node(_nodes, f_var, el._nid);
-                return std::make_pair(_nodes[n]._q.avg(), _nodes[n]._q.cnt());
+                return _nodes[n]._q;
             }
         }
-        return std::make_pair(std::numeric_limits<double>::quiet_NaN(), 0.0);
+        return qvar_t(std::numeric_limits<double>::quiet_NaN(), 0.0, 0.0);
     }
 
     void MLearning::print(std::ostream& s, size_t tabs, std::map<size_t, size_t>& edge_map, const std::vector<MLearning>& clouds) const {
@@ -214,7 +214,9 @@ namespace prlearn {
         }
     }
 
-    void MLearning::update(const std::vector<MLearning>& clouds, bool minimization) {
+    void MLearning::update(const std::vector<MLearning>& clouds, bool minimization) 
+    {
+        std::cerr << "SIZE " << this << " " << _nodes.size() << std::endl;
     }
 
     std::unique_ptr<size_t[] > MLearning::findIntersection(const double* point) const {

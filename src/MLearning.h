@@ -53,7 +53,7 @@ namespace prlearn {
 
         void update(const std::vector<MLearning>& clouds, bool minimization);
 
-        std::pair<double, double> lookup(size_t label, const double* f_var, size_t dimen) const;
+        qvar_t lookup(size_t label, const double* f_var, size_t dimen) const;
 
         void print(std::ostream& s, size_t tabs, std::map<size_t, size_t>& edge_map, const std::vector<MLearning>& clouds) const;
 

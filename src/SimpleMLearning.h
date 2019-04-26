@@ -40,6 +40,7 @@ namespace prlearn {
 
         SimpleMLearning(SimpleMLearning&&) = default;
         SimpleMLearning& operator=(SimpleMLearning&&) = default;
+        virtual ~SimpleMLearning();
 
         void addSample(size_t dimen, // dimensions
                 const double*, const double*, // doubles
@@ -52,7 +53,7 @@ namespace prlearn {
 
         void update(const std::vector<SimpleMLearning>& clouds, bool minimization);
 
-        std::pair<double, double> lookup(size_t label, const double*, size_t) const;
+        qvar_t lookup(size_t label, const double*, size_t) const;
 
         void print(std::ostream& s, size_t tabs, std::map<size_t, size_t>& label_map, const std::vector<SimpleMLearning>&) const;
 
@@ -60,18 +61,18 @@ namespace prlearn {
 
         struct succs_t {
             size_t _nid = 0;
-            avg_t _cost;
+            qvar_t _cost;
             bool operator<(const succs_t& other) const;
         };
 
         struct node_t {
-            avg_t _q;
+            qvar_t _q;
             size_t _label = 0;
             std::vector<succs_t> _succssors;
             bool operator<(const node_t& other) const;
         };
         std::vector<node_t> _nodes;
-        avg_t _q;
+        qvar_t _q;
     };
 }
 #endif /* SIMPLEMLEARNING_H */

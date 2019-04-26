@@ -24,6 +24,7 @@
 
 #ifndef QLEARNING_H
 #define QLEARNING_H
+#include "structs.h"
 
 #include <vector>
 #include <utility>
@@ -54,9 +55,9 @@ namespace prlearn {
             _regressor.print(s, tabs, label_map);
         }
 
-        std::pair<double, double> lookup(size_t label, const double* f_var, size_t dimen) const {
+        qvar_t lookup(size_t label, const double* f_var, size_t dimen) const {
             auto res = _regressor.lookup(label, f_var, dimen);
-            return std::make_pair(res._avg, res._cnt);
+            return qvar_t(res._avg, res._cnt, 0.0);
         }
 
     protected:
