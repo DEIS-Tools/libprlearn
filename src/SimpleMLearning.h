@@ -28,7 +28,9 @@
 
 #include "propts.h"
 #include "structs.h"
+
 #include <map>
+#include <limits>
 
 namespace prlearn {
 

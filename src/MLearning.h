@@ -26,10 +26,11 @@
 #ifndef MLEARNING_H
 #define MLEARNING_H
 
-#include <map>
-
 #include "propts.h"
 #include "structs.h"
+
+#include <map>
+#include <limits>
 
 namespace prlearn {
 
