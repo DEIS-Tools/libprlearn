@@ -58,17 +58,16 @@ namespace prlearn {
             _nodes.emplace_back(n, _dimen);
     }
 
-    avg_t
+    qvar_t
     RefinementTree::lookup(size_t label, const double* point, size_t dimen) const {
         el_t lf(label);
         auto res = std::lower_bound(std::begin(_mapping), std::end(_mapping), lf);
         if (res == std::end(_mapping) || res->_label != label)
-            return avg_t{std::numeric_limits<double>::quiet_NaN(), 0};
+            return qvar_t(std::numeric_limits<double>::quiet_NaN(), 0, 0);
         assert(dimen == _dimen);
         auto n = _nodes[res->_nid].get_leaf(point, res->_nid, _nodes);
         auto& node = _nodes[n];
-        avg_t avg{node._predictor._q.avg(), std::min(1.0, node._predictor._q.cnt())};
-        return avg;
+        return qvar_t(node._predictor._q.avg(), node._predictor._cnt, node._predictor._q._variance);
     }
 
     double RefinementTree::getBestQ(const double* point, bool minimization) const {
@@ -142,6 +141,7 @@ namespace prlearn {
         // let us start by enforcing the learning-rate
         _predictor._q.cnt() = std::min<size_t>(_predictor._q.cnt(), options._q_learn_rate);
         _predictor._q += nval;
+        ++_predictor._cnt;
         auto svar = 0;
         auto cnt = 0;
 
@@ -214,6 +214,8 @@ namespace prlearn {
                     nodes[shigh]._predictor._q._variance = 0;
                 }
             }
+            nodes[shigh]._predictor._cnt = nodes[shigh]._predictor._q.cnt();
+            nodes[slow]._predictor._cnt = nodes[slow]._predictor._q.cnt();
             assert(nodes[shigh]._predictor._q.cnt() > 0);
             assert(nodes[slow]._predictor._q.cnt() > 0);
         } else {

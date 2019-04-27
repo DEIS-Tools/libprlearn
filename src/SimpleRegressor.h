@@ -40,7 +40,7 @@ namespace prlearn {
         SimpleRegressor(const SimpleRegressor&) = default;
         SimpleRegressor(SimpleRegressor&&) = default;
 
-        avg_t lookup(size_t label, const double*, size_t dimen) const {
+        qvar_t lookup(size_t label, const double*, size_t dimen) const {
             el_t lf(label);
 
             auto res = std::lower_bound(std::begin(_labels), std::end(_labels), lf);
@@ -48,7 +48,7 @@ namespace prlearn {
             if (res != std::end(_labels) && res->_label == label)
                 return res->_value;
             else
-                return avg_t{std::numeric_limits<double>::quiet_NaN(), 0};
+                return qvar_t{std::numeric_limits<double>::quiet_NaN(), 0, 0};
         }
 
         double getBestQ(const double*, bool minimization) const {
@@ -56,10 +56,10 @@ namespace prlearn {
             if (!minimization)
                 res = -res;
             for (auto& e : _labels)
-                if (!std::isinf(e._value._avg) && !std::isnan(e._value._avg))
+                if (!std::isinf(e._value.avg()) && !std::isnan(e._value.avg()))
                     res = minimization ?
-                        std::min(res, e._value._avg) :
-                    std::max(res, e._value._avg);
+                        std::min(res, e._value.avg()) :
+                    std::max(res, e._value.avg());
             return res;
         }
 
@@ -70,7 +70,8 @@ namespace prlearn {
 
             if (res == std::end(_labels) || res->_label != label)
                 res = _labels.insert(res, lf);
-            res->_value._cnt = std::min<size_t>(res->_value._cnt, options._q_learn_rate);
+            res->_value.cnt() = std::min<size_t>(res->_cnt, options._q_learn_rate);
+            res->_cnt += 1;
             res->_value += nval;
             assert(res->_value._avg >= 0);
         }
@@ -84,7 +85,7 @@ namespace prlearn {
                 first = false;
                 s << "\n";
                 for (size_t t = 0; t < tabs; ++t) s << "\t";
-                s << "\"" << label_map[w._label] << "\" : " << w._value._avg;
+                s << "\"" << label_map[w._label] << "\" : " << w._value.avg();
             }
             s << "\n";
             for (size_t i = 0; i < tabs; ++i) s << "\t";
@@ -102,7 +103,8 @@ namespace prlearn {
                 _value += d;
             };
             size_t _label;
-            avg_t _value;
+            qvar_t _value;
+            size_t _cnt;
 
             bool operator<(const el_t& other) const {
                 return _label < other._label;

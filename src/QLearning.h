@@ -57,7 +57,7 @@ namespace prlearn {
 
         qvar_t lookup(size_t label, const double* f_var, size_t dimen) const {
             auto res = _regressor.lookup(label, f_var, dimen);
-            return qvar_t(res._avg, res._cnt, 0.0);
+            return res;
         }
 
     protected:

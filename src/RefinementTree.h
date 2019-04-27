@@ -42,7 +42,7 @@ namespace prlearn {
         RefinementTree(const RefinementTree&);
         RefinementTree(RefinementTree&&) = default;
 
-        avg_t lookup(size_t label, const double*, size_t dimen) const;
+        qvar_t lookup(size_t label, const double*, size_t dimen) const;
 
         void update(size_t label, const double*, size_t dimen, double nval, const double delta, const propts_t& options);
 
@@ -73,6 +73,7 @@ namespace prlearn {
                 }
             }
             qvar_t _q;
+            size_t _cnt = 0;
             std::unique_ptr<qdata_t[] > _data = nullptr;
         };
 
