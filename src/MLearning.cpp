@@ -29,6 +29,7 @@
 #include <memory>
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 
 namespace prlearn {
 
@@ -176,6 +177,7 @@ namespace prlearn {
     }
 
     void MLearning::print(std::ostream& s, size_t tabs, std::map<size_t, size_t>& edge_map, const std::vector<MLearning>& clouds) const {
+        s << std::setprecision (std::numeric_limits<double>::digits10 + 1);
         for (size_t i = 0; i < tabs; ++i) s << "\t";
         s << "{";
         bool first = true;
@@ -210,7 +212,16 @@ namespace prlearn {
             s << "}";
         } else {
             for (size_t i = 0; i < tabs; ++i) s << "\t";
-            s << _q.avg();
+            if(_q.cnt() > 0)
+            {
+                auto v = _q.avg();
+                if(!std::isinf(v) && !std::isnan(v))
+                    s << v;
+                else
+                    s << "\"inf\"";
+            }
+            else
+                s << "\"inf\"";
         }
     }
 

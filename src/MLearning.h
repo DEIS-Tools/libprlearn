@@ -32,7 +32,7 @@
 #include <map>
 #include <limits>
 
-namespace prlearn {
+namespace prlearn { 
 
     class MLearning {
     public:

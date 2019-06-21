@@ -24,6 +24,7 @@
  */
 
 #include "SimpleMLearning.h"
+#include <iomanip>
 
 namespace prlearn {
     SimpleMLearning::~SimpleMLearning() {
@@ -58,6 +59,7 @@ namespace prlearn {
     }
 
     void SimpleMLearning::print(std::ostream& s, size_t tabs, std::map<size_t, size_t>& label_map, const std::vector<SimpleMLearning>& other) const {
+        s << std::setprecision (std::numeric_limits<double>::digits10 + 1);
         for (size_t i = 0; i < tabs; ++i) s << "\t";
         s << "{\"id\":" << (this - other.data()) << ",";
         bool first = true;
@@ -69,7 +71,13 @@ namespace prlearn {
             for (size_t i = 0; i < tabs + 1; ++i) s << "\t";
             s << "\"";
             s << label_map[el._label];
-            s << "\":{\"val\":" << el._q.avg() << ",\"succs\":[";
+            s << "\":{\"val\":";
+            auto v = el._q.avg();
+            if(!std::isinf(v) && !std::isnan(v))
+                s << v;
+            else
+                s << "\"inf\"";
+            s << ",\"succs\":[";
             bool f = true;
             for(auto& e : el._succssors)
             {

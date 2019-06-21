@@ -25,12 +25,15 @@
 
 #include "RefinementTree.h"
 #include <limits>
+#include <iomanip>
+
 namespace prlearn {
 
     RefinementTree::RefinementTree() {
     }
 
     void RefinementTree::print(std::ostream& s, size_t tabs, std::map<size_t, size_t>& edge_map) const {
+        s << std::setprecision (std::numeric_limits<double>::digits10 + 1);
         for (size_t i = 0; i < tabs; ++i) s << "\t";
         s << "{";
         bool first = true;
@@ -121,7 +124,11 @@ namespace prlearn {
             for (size_t i = 0; i < tabs; ++i) s << "\t";
             s << "}";
         } else {
-            s << _predictor._q.avg();
+            auto v = _predictor._q.avg();
+            if(!std::isinf(v) && !std::isnan(v))
+                s << _predictor._q.avg();
+            else
+                s << "\"inf\"";
         }
     }
 

@@ -25,12 +25,13 @@
 #ifndef SIMPLEREGRESSOR_H
 #define SIMPLEREGRESSOR_H
 
+#include "propts.h"
+#include "structs.h"
+
 #include <limits>
 #include <vector>
 #include <map>
-
-#include "propts.h"
-#include "structs.h"
+#include <iomanip>
 
 namespace prlearn {
 
@@ -73,10 +74,11 @@ namespace prlearn {
             res->_value.cnt() = std::min<size_t>(res->_cnt, options._q_learn_rate);
             res->_cnt += 1;
             res->_value += nval;
-            assert(res->_value._avg >= 0);
+            assert(res->_value.avg() >= 0);
         }
 
         void print(std::ostream& s, size_t tabs, std::map<size_t, size_t>& label_map) const {
+            s << std::setprecision (std::numeric_limits<double>::digits10 + 1);
             for (size_t i = 0; i < tabs; ++i) s << "\t";
             s << "{";
             bool first = true;
@@ -85,7 +87,12 @@ namespace prlearn {
                 first = false;
                 s << "\n";
                 for (size_t t = 0; t < tabs; ++t) s << "\t";
-                s << "\"" << label_map[w._label] << "\" : " << w._value.avg();
+                s << "\"" << label_map[w._label] << "\" : ";
+                auto v = w._value.avg();
+                if(!std::isinf(v) && !std::isnan(v))
+                    s << v;
+                else
+                    s << "\"inf\"";
             }
             s << "\n";
             for (size_t i = 0; i < tabs; ++i) s << "\t";
