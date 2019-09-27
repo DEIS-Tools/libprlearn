@@ -13,6 +13,7 @@ set_target_properties(prlearnStatic PROPERTIES OUTPUT_NAME prlearn)
 
 
 install(TARGETS prlearn 
+	RUNTIME DESTINATION bin
 	LIBRARY DESTINATION lib 
 	ARCHIVE DESTINATION lib)
 install (FILES  MLearning.h
