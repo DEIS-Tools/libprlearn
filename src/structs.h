@@ -29,7 +29,7 @@
 #include <memory>
 #include <stddef.h>
 #include <cstring>
-#include <math.h>
+#include <cmath>
 #include <cassert>
 #include <vector>
 #include <ostream>
