@@ -39,7 +39,10 @@ namespace prlearn {
         double _avg = 0;
         double _cnt = 0;
 
-        inline void addPoints(avg_t other) {
+        constexpr avg_t() = default;
+        constexpr avg_t(const avg_t&) = default;
+
+        inline void addPoints(const avg_t& other) {
             addPoints(other._cnt, other._avg);
         }
 
@@ -91,8 +94,7 @@ namespace prlearn {
 
     struct qvar_t : private avg_t {
 
-        qvar_t() {
-        };
+        qvar_t() = default;
 
         qvar_t(double d, double w, double v) {
             _avg = d;
