@@ -109,9 +109,9 @@ namespace prlearn {
             el_t(size_t label, double d) : _label(label) {
                 _value += d;
             };
-            size_t _label;
+            size_t _label = 0;
             qvar_t _value;
-            size_t _cnt;
+            size_t _cnt = 0;
 
             bool operator<(const el_t& other) const {
                 return _label < other._label;
