@@ -166,7 +166,7 @@ namespace prlearn {
             _nodes[rnd].update(rnd, minimization, clouds, _nodes, dimen, false, delta, options);
     }
 
-    qvar_t MLearning::lookup(size_t label, const double* f_var, size_t dimen) const {
+    qvar_t MLearning::lookup(size_t label, const double* f_var, size_t) const {
         for (auto& el : _mapping) {
             if (el._label == label) {
                 auto n = _nodes[el._nid].find_node(_nodes, f_var, el._nid);
@@ -196,7 +196,7 @@ namespace prlearn {
         s << "}";
     }
 
-    void MLearning::node_t::print(std::ostream& s, size_t tabs, const std::vector<node_t>&) const {
+    void MLearning::node_t::print(std::ostream& s, size_t tabs, const std::vector<node_t>& nodes) const {
         for (size_t i = 0; i < tabs; ++i) s << "\t";
         if (_split._is_split) {
             s << "{\"var\":" << _split._var << ",\"bound\":" << _split._boundary << ",\n";
