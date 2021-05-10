@@ -47,7 +47,7 @@ namespace prlearn {
             auto res = std::lower_bound(std::begin(_labels), std::end(_labels), lf);
 
             if (res != std::end(_labels) && res->_label == label)
-                return qvar_t{res->_value.avg(), res->_cnt, res->_value._variance};
+                return qvar_t{res->_value.avg(), (double)res->_cnt, res->_value._variance};
             else
                 return qvar_t{std::numeric_limits<double>::quiet_NaN(), 0, 0};
         }
