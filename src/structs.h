@@ -39,8 +39,8 @@ namespace prlearn {
         double _avg = 0;
         double _cnt = 0;
 
-		constexpr avg_t() = default;
-		constexpr avg_t(const avg_t&) = default;
+        constexpr avg_t() = default;
+        constexpr avg_t(const avg_t&) = default;
 
         inline void addPoints(const avg_t& other) {
             addPoints(other._cnt, other._avg);
