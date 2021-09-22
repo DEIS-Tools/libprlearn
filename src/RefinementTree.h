@@ -92,7 +92,7 @@ namespace prlearn {
             node_t() = default;
             node_t(const node_t& other, size_t dimen);
             node_t(node_t&& other) noexcept = default;
-            node_t& operator=(node_t&& other) noexcept = default;
+            node_t& operator=(node_t&& other) = default;
         };
 
         std::vector<el_t> _mapping;

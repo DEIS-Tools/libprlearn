@@ -92,7 +92,7 @@ namespace prlearn {
             node_t() = default;
             node_t(const node_t& other, size_t dimen);
             node_t(node_t&& other) noexcept = default;
-            node_t& operator=(node_t&& other) noexcept = default;
+            node_t& operator=(node_t&& other) = default;
 
             size_t find_node(const std::vector<node_t>& nodes, const double * point, const size_t id) const;
             void update(size_t id, bool minimize, const std::vector<MLearning>& clouds, std::vector<node_t>& nodes, size_t dimen, bool allowSplit, const double delta, const propts_t& options);
