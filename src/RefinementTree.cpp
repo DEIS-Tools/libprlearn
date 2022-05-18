@@ -62,7 +62,7 @@ namespace prlearn {
     }
 
     qvar_t
-    RefinementTree::lookup(size_t label, const double* point) const {
+    RefinementTree::lookup(size_t label, const double* point, size_t) const {
         el_t lf(label);
         auto res = std::lower_bound(std::begin(_mapping), std::end(_mapping), lf);
         if (res == std::end(_mapping) || res->_label != label)
