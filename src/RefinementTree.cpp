@@ -62,12 +62,11 @@ namespace prlearn {
     }
 
     qvar_t
-    RefinementTree::lookup(size_t label, const double* point, size_t dimen) const {
+    RefinementTree::lookup(size_t label, const double* point) const {
         el_t lf(label);
         auto res = std::lower_bound(std::begin(_mapping), std::end(_mapping), lf);
         if (res == std::end(_mapping) || res->_label != label)
             return qvar_t(std::numeric_limits<double>::quiet_NaN(), 0, 0);
-        assert(dimen == _dimen);
         auto n = _nodes[res->_nid].get_leaf(point, res->_nid, _nodes);
         auto& node = _nodes[n];
         return qvar_t(node._predictor._q.avg(), node._predictor._cnt, node._predictor._q._variance);
