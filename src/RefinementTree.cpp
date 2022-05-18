@@ -95,7 +95,7 @@ namespace prlearn {
                 if(j >= _mapping.size()) return val;
                 if(_mapping[j]._label != next_labels[i])
                     continue;
-                const auto& res = _mapping[i];
+                const auto& res = _mapping[j];
                 auto node = _nodes[res._nid].get_leaf(point, res._nid, _nodes);
                 auto v = _nodes[node]._predictor._q.avg();
                 if (!std::isinf(v) && !std::isnan(v))
