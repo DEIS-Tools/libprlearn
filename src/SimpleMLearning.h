@@ -46,6 +46,7 @@ namespace prlearn {
 
         void addSample(size_t dimen, // dimensions
                 const double*, const double*, // doubles
+                size_t* next_labels, size_t n_labels, // ignored by m-learning
                 size_t label,
                 size_t dest, double value, // cost
                 const std::vector<SimpleMLearning>& clouds, // other points

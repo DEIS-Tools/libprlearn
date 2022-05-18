@@ -45,6 +45,7 @@ namespace prlearn {
 
         void addSample(size_t dimen, // dimensions
                 const double* f_var, const double* t_var, // doubles
+                size_t* next_labels, size_t n_labels, // actions in dest, ignored in m learning
                 size_t label, // edge chosen, edge taken
                 size_t dest, double value, // cost
                 const std::vector<MLearning>& clouds, // other points

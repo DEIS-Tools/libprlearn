@@ -104,7 +104,8 @@ namespace prlearn {
     }
 
     void MLearning::addSample(size_t dimen, const double* f_var,
-            const double* t_var, size_t label,
+            const double* t_var, size_t*, size_t,
+            size_t label,
             size_t dest, double value, const std::vector<MLearning>& clouds,
             bool minimization, const double delta,
             const propts_t& options) {
