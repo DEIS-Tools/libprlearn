@@ -1,22 +1,22 @@
 /*
  * Copyright Peter G. Jensen
- *  
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 
-/* 
+/*
  * File:   RefinementTree.h
  * Author: Peter G. Jensen
  *
@@ -48,7 +48,7 @@ namespace prlearn {
 
         void print(std::ostream& s, size_t tabs, std::map<size_t, size_t>& edge_map) const;
 
-        double getBestQ(const double* val, bool minimization) const;
+        double getBestQ(const double* val, bool minimization, size_t* next_labels = nullptr, size_t n_labels = 0) const;
 
     protected:
 
@@ -78,7 +78,7 @@ namespace prlearn {
         };
 
         struct node_t {
-            // we could do these two values as a single pointer 
+            // we could do these two values as a single pointer
             // which dynamically allocates enough space for both split and pred_t
             // including space for the run-time sized arrays.
             // however, this is at current time of writing a premature optimization.

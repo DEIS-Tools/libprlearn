@@ -3,7 +3,7 @@ project(PRLearn C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-find_package(Boost 1.54 REQUIRED COMPONENTS headers REQUIRED)
+find_package(Boost 1.54 REQUIRED)
 
 add_library(prlearn SHARED ${HEADER_FILES} MLearning.cpp SimpleMLearning.cpp RefinementTree.cpp structs.cpp)
 add_library(prlearnStatic STATIC ${HEADER_FILES} MLearning.cpp SimpleMLearning.cpp RefinementTree.cpp structs.cpp)
