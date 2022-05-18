@@ -1,21 +1,21 @@
 /*
  * Copyright Peter G. Jensen
- *  
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* 
+/*
  * File:   SimpleRegressor.h
  * Author: Peter G. Jensen
  *
@@ -52,15 +52,24 @@ namespace prlearn {
                 return qvar_t{std::numeric_limits<double>::quiet_NaN(), 0, 0};
         }
 
-        double getBestQ(const double*, bool minimization) const {
+        double getBestQ(const double*, bool minimization, size_t* next_labels = nullptr, size_t n_labels = 0) const {
             double res = std::numeric_limits<double>::infinity();
             if (!minimization)
                 res = -res;
+            size_t j = 0;
             for (auto& e : _labels)
+            {
+                if(next_labels != nullptr)
+                {
+                    for(;j < n_labels && next_labels[j] < e._label; ++j) {}
+                    if(j >= n_labels) return res;
+                    if(next_labels[j] != e._label) continue;
+                }
                 if (!std::isinf(e._value.avg()) && !std::isnan(e._value.avg()))
                     res = minimization ?
                         std::min(res, e._value.avg()) :
                     std::max(res, e._value.avg());
+            }
             return res;
         }
 
