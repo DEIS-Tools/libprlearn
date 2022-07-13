@@ -25,12 +25,16 @@
 #ifndef QLEARNING_H
 #define QLEARNING_H
 #include "structs.h"
+#include "propts.h"
 
 #include <vector>
 #include <utility>
 #include <numeric>
 #include <cmath>
 #include <limits>
+#include <map>
+#include <iostream>
+
 namespace prlearn {
 
     template<typename Regressor>

@@ -26,6 +26,8 @@
 #include "RefinementTree.h"
 #include <limits>
 #include <iomanip>
+#include <glpk.h>
+#include <iostream>
 
 namespace prlearn {
 
@@ -151,12 +153,142 @@ namespace prlearn {
         }
     }
 
+    avg_t RefinementTree::node_t::skewer(const double* point, size_t dimen) const
+    {
+        avg_t sm;
+        if(_predictor._q._variance == 0)
+        {
+            sm += avg_t(_predictor._q.avg(), _predictor._cnt);
+        }
+        else
+        {
+            /*auto var = _predictor._cnt.
+            for (size_t i = 0; i < dimen; ++i) {
+                if(_predictor._data[i]._lowq.cnt() <= 1 ||
+                   _predictor._data[i]._highq.cnt() <= 1)
+                {
+                    sm += avg_t(_predictor._q.avg(), 1/std::sqrt(_predictor._q._variance));
+                }
+                else
+                {
+                    auto d = _predictor._data[i]._hmid._avg - _predictor._data[i]._lmid._avg;
+                    auto diff = _predictor._data[i]._highq.avg() - _predictor._data[i]._lowq.avg();
+                    auto delta = diff/d;
+                    auto nq = (point[i] - _predictor._data[i]._lmid._avg)*delta;
+                    auto p = (point[i] - _predictor._data[i]._lmid._avg) / d;
+                    double var = 0;
+                    if(_predictor._data[i]._lowq._variance == 0)
+                    sm += avg_t(nq, );
+                }
+
+                auto p = (point[i] - _predictor._data[i]._lmid._avg) / d;
+                if(point[i] <= _predictor._data[i]._lmid._avg)
+                    sm += avg_t(_predictor._data[i]._lowq.avg(), 1.0/std::sqrt(_predictor._data[i]._lowq._variance));
+                else if(point[i] >= _predictor._data[i]._hmid._avg)
+                    sm += avg_t(_predictor._data[i]._highq.avg(), 1.0/std::sqrt(_predictor._data[i]._highq._variance));
+                else
+                {
+                    auto d = _predictor._data[i]._hmid._avg - _predictor._data[i]._lmid._avg;
+                    auto p = (point[i] - _predictor._data[i]._lmid._avg) / d;
+                    sm += avg_t(p * _predictor._data[i]._lowq.avg() + (1.0-p)*_predictor._data[i]._highq.avg(), p/std::sqrt(_predictor._data[i]._lowq._variance) + (1.0-p)/std::sqrt(_predictor._data[i]._highq._variance));
+                }
+            }*/
+        }
+        return sm;
+    }
+
     size_t RefinementTree::node_t::get_leaf(const double* point, size_t current, const std::vector<node_t>& nodes) const {
         if (!_split._is_split) return current;
         if (point[_split._var] <= _split._boundary)
             return nodes[_split._low].get_leaf(point, _split._low, nodes);
         else
             return nodes[_split._high].get_leaf(point, _split._high, nodes);
+    }
+
+    void RefinementTree::node_t::set_correction(size_t dimen)
+    {
+        if(_predictor._q._variance == 0)
+            return;
+        auto* lp = glp_create_prob();
+        if(lp == nullptr)
+            return;
+
+        const uint32_t nCol = dimen + dimen * 4 + 1; // each dimension + 4 slack variable for each dimension (pos/neg deviation) for each direction + constant
+        const int nRow = dimen * 2;
+        std::vector<int32_t> indir(std::max<uint32_t>(nCol, nRow) + 1);
+        std::vector<double> row(nCol + 1);
+        for(size_t i = 1; i < nCol + 1; ++i)
+            indir[i] = i;
+
+        glp_add_cols(lp, nCol + 1);
+        glp_add_rows(lp, nRow + 1);
+
+        size_t rowno = 0;
+        for(size_t d = 0; d < dimen; ++d)
+        {
+            qdata_t& data = _predictor._data[d];
+            for(bool low : {true, false})
+            {
+                ++rowno;
+                auto& qval = low ? data._lowq : data._highq;
+                auto& mid = low ? data._lmid : data._hmid;
+                if(qval.cnt() == 0) continue;
+                for(size_t i = 0; i < dimen; ++i)
+                {
+                    if(i == d)
+                        row[i+1] = mid._avg;
+                    else
+                    {
+                        avg_t a = _predictor._data[i]._lmid;
+                        a += _predictor._data[i]._hmid;
+                        row[i+1] = a._avg;
+                    }
+                }
+                row[dimen+1] = 1; // constant
+                row[dimen + 2 + d + (low ? 0 : dimen*2)] = 1; // slack
+                row[dimen + 2 + d + dimen + (low ? 0 : dimen*2)] = -1; // slack
+                glp_set_mat_row(lp, rowno, nCol, indir.data(), row.data());
+                glp_set_row_bnds(lp, rowno, GLP_FX, qval.avg(), qval.avg());
+                std::cerr << "[" << row[0] << "," << row[1] << "] = " << qval << std::endl;
+                row[dimen + 2 + d + (low ? 0 : dimen)] = 0; // reset slack
+                row[dimen + 2 + d + dimen + (low ? 0 : dimen*2)] = 0; // slack
+                double r = std::sqrt(qval._variance)/std::sqrt(_predictor._q._variance);
+                glp_set_obj_coef(lp, dimen + 2 + d + (low ? 0 : dimen), (1.0/(1.0 + std::pow(r, 2.0))));
+                glp_set_obj_coef(lp, dimen + 2 + d + dimen + (low ? 0 : dimen*2), (1.0/(1.0 + r)));
+            }
+        }
+
+        for(size_t i = 1; i <= nCol; i++) {
+            glp_set_col_kind(lp, i, GLP_CV);
+            if(i >= dimen + 2)
+                glp_set_col_bnds(lp, i, GLP_LO, 0, std::numeric_limits<double>::infinity());
+            else
+                glp_set_col_bnds(lp, i, GLP_FR, -std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
+        }
+
+        for(size_t i = 0; i <= dimen + 1; ++i)
+        {
+            glp_set_obj_coef(lp, i, 0);
+        }
+
+        // Minimize the objective
+        glp_set_obj_dir(lp, GLP_MIN);
+        auto stime = glp_time();
+        glp_smcp settings;
+        glp_write_lp(lp, nullptr, "lp");
+        glp_init_smcp(&settings);
+        settings.presolve = GLP_OFF;
+        settings.msg_lev = 0;
+        auto result = glp_simplex(lp, &settings);
+        if(result == 0 && glp_get_status(lp) == GLP_OPT)
+        {
+            _correction = std::make_unique<double[]>(_dimen + 1);
+            for(size_t i = 0; i < dimen + 1; ++i)
+            {
+                _correction[i] = glp_get_col_prim(lp, i+1);
+            }
+        }
+        else _correction = nullptr;
     }
 
     void RefinementTree::node_t::update(const double* point, size_t dimen, double nval, std::vector<node_t>& nodes, double delta, const propts_t& options) {
@@ -170,7 +302,6 @@ namespace prlearn {
         ++_predictor._cnt;
         auto svar = 0;
         auto cnt = 0;
-
         for (size_t i = 0; i < dimen; ++i) {
             // add new data-point to all hypothetical new partitions
             if (point[i] <= _predictor._data[i]._midpoint._avg) {
@@ -209,6 +340,7 @@ namespace prlearn {
             std::unique_ptr < qdata_t[] > tmp;
             tmp.swap(_predictor._data);
             auto oq = _predictor._q;
+            auto org = this - nodes.data();
 
             // this  <-- is invalidated below!
             nodes.emplace_back();
@@ -242,6 +374,9 @@ namespace prlearn {
             }
             nodes[shigh]._predictor._cnt = nodes[shigh]._predictor._q.cnt();
             nodes[slow]._predictor._cnt = nodes[slow]._predictor._q.cnt();
+            tmp.swap(nodes[org]._predictor._data);
+            nodes[org].set_correction(dimen);
+            nodes[org]._predictor._data = nullptr;
             assert(nodes[shigh]._predictor._q.cnt() > 0);
             assert(nodes[slow]._predictor._q.cnt() > 0);
         } else {

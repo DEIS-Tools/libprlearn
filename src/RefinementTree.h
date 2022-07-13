@@ -84,15 +84,18 @@ namespace prlearn {
             // however, this is at current time of writing a premature optimization.
             simple_split_t _split;
             qpred_t _predictor;
+            std::unique_ptr<double[]> _correction;
 
             size_t get_leaf(const double* point, size_t current, const std::vector<node_t>& nodes) const;
             void update(const double* point, size_t dimen, double nval, std::vector<node_t>& nodes, double delta, const propts_t& options);
             void print(std::ostream& s, size_t tabs, const std::vector<node_t>& nodes) const;
+            avg_t skewer(const double* point, size_t dimen) const;
 
             node_t() = default;
             node_t(const node_t& other, size_t dimen);
             node_t(node_t&& other) noexcept = default;
             node_t& operator=(node_t&& other) noexcept = default;
+            void set_correction(size_t dimen);
         };
 
         std::vector<el_t> _mapping;
