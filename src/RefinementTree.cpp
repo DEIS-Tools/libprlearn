@@ -282,7 +282,7 @@ namespace prlearn {
         auto result = glp_simplex(lp, &settings);
         if(result == 0 && glp_get_status(lp) == GLP_OPT)
         {
-            _correction = std::make_unique<double[]>(_dimen + 1);
+            _correction = std::make_unique<double[]>(dimen + 1);
             for(size_t i = 0; i < dimen + 1; ++i)
             {
                 _correction[i] = glp_get_col_prim(lp, i+1);
