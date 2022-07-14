@@ -95,7 +95,8 @@ namespace prlearn {
             node_t(const node_t& other, size_t dimen);
             node_t(node_t&& other) noexcept = default;
             node_t& operator=(node_t&& other) noexcept = default;
-            void set_correction(size_t dimen);
+            std::unique_ptr<double[]> get_correction(size_t dimen);
+            double get_val(size_t dimen, const double* point) const;
         };
 
         std::vector<el_t> _mapping;

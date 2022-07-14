@@ -71,7 +71,7 @@ namespace prlearn {
             return qvar_t(std::numeric_limits<double>::quiet_NaN(), 0, 0);
         auto n = _nodes[res->_nid].get_leaf(point, res->_nid, _nodes);
         auto& node = _nodes[n];
-        return qvar_t(node._predictor._q.avg(), node._predictor._cnt, node._predictor._q._variance);
+        return qvar_t(node.get_val(_dimen, point), node._predictor._cnt, node._predictor._q._variance);
     }
 
     double RefinementTree::getBestQ(const double* point, bool minimization, size_t* next_labels, size_t n_labels) const {
@@ -82,7 +82,7 @@ namespace prlearn {
         {
             for (const el_t& el : _mapping) {
                 auto node = _nodes[el._nid].get_leaf(point, el._nid, _nodes);
-                auto v = _nodes[node]._predictor._q.avg();
+                auto v = _nodes[node].get_val(_dimen, point);
                 if (!std::isinf(v) && !std::isnan(v))
                     val = minimization ?
                         std::min(v, val) :
@@ -205,13 +205,26 @@ namespace prlearn {
             return nodes[_split._high].get_leaf(point, _split._high, nodes);
     }
 
-    void RefinementTree::node_t::set_correction(size_t dimen)
+    double RefinementTree::node_t::get_val(size_t dimen, const double* point) const {
+        double val = _predictor._q.avg();
+        if(_correction)
+        {
+            val += _correction[dimen];
+            for(size_t i = 0; i < dimen; ++i)
+            {
+                val += _correction[i] * point[i];
+            }
+        }
+        return val;
+    }
+
+    std::unique_ptr<double[]> RefinementTree::node_t::get_correction(size_t dimen)
     {
         if(_predictor._q._variance == 0)
-            return;
+            return nullptr;
         auto* lp = glp_create_prob();
         if(lp == nullptr)
-            return;
+            return nullptr;
 
         const uint32_t nCol = dimen + dimen * 4 + 1; // each dimension + 4 slack variable for each dimension (pos/neg deviation) for each direction + constant
         const int nRow = dimen * 2;
@@ -249,7 +262,7 @@ namespace prlearn {
                 row[dimen + 2 + d + dimen + (low ? 0 : dimen*2)] = -1; // slack
                 glp_set_mat_row(lp, rowno, nCol, indir.data(), row.data());
                 glp_set_row_bnds(lp, rowno, GLP_FX, qval.avg(), qval.avg());
-                std::cerr << "[" << row[0] << "," << row[1] << "] = " << qval << std::endl;
+                //std::cerr << "[" << row[0] << "," << row[1] << "] = " << qval << std::endl;
                 row[dimen + 2 + d + (low ? 0 : dimen)] = 0; // reset slack
                 row[dimen + 2 + d + dimen + (low ? 0 : dimen*2)] = 0; // slack
                 double r = std::sqrt(qval._variance)/std::sqrt(_predictor._q._variance);
@@ -275,27 +288,33 @@ namespace prlearn {
         glp_set_obj_dir(lp, GLP_MIN);
         auto stime = glp_time();
         glp_smcp settings;
-        glp_write_lp(lp, nullptr, "lp");
         glp_init_smcp(&settings);
         settings.presolve = GLP_OFF;
         settings.msg_lev = 0;
         auto result = glp_simplex(lp, &settings);
+        std::unique_ptr<double[]> correction = nullptr;
         if(result == 0 && glp_get_status(lp) == GLP_OPT)
         {
-            _correction = std::make_unique<double[]>(dimen + 1);
+            correction = std::make_unique<double[]>(dimen + 1);
             for(size_t i = 0; i < dimen + 1; ++i)
             {
-                _correction[i] = glp_get_col_prim(lp, i+1);
+                correction[i] = glp_get_col_prim(lp, i+1) + (_correction != nullptr ? _correction[i] : 0);
             }
         }
-        else _correction = nullptr;
+        else correction = nullptr;
+        return correction;
     }
 
     void RefinementTree::node_t::update(const double* point, size_t dimen, double nval, std::vector<node_t>& nodes, double delta, const propts_t& options) {
         assert(!_split._is_split);
         if (_predictor._data == nullptr)
             _predictor._data = std::make_unique < qdata_t[]>(dimen);
-
+        if(_correction)
+        {
+            nval -= _correction[dimen];
+            for(size_t i = 0; i < dimen; ++i)
+                nval -= _correction[i] * point[i];
+        }
         // let us start by enforcing the learning-rate
         _predictor._q.cnt() = std::min<size_t>(_predictor._q.cnt(), options._q_learn_rate);
         _predictor._q += nval;
@@ -375,7 +394,20 @@ namespace prlearn {
             nodes[shigh]._predictor._cnt = nodes[shigh]._predictor._q.cnt();
             nodes[slow]._predictor._cnt = nodes[slow]._predictor._q.cnt();
             tmp.swap(nodes[org]._predictor._data);
-            nodes[org].set_correction(dimen);
+            auto correction = nodes[org].get_correction(dimen);
+            if(correction != nullptr)
+            {
+                nodes[shigh]._correction = std::make_unique<double[]>(dimen + 1);
+                std::copy(correction.get(), correction.get() + dimen + 1, nodes[shigh]._correction.get());
+                nodes[slow]._correction = std::move(correction);
+                nodes[org]._correction = nullptr;
+            }
+            else if(_correction != nullptr)
+            {
+                nodes[shigh]._correction = std::make_unique<double[]>(dimen + 1);
+                std::copy(nodes[org]._correction.get(), nodes[org]._correction.get() + dimen + 1, nodes[shigh]._correction.get());
+                nodes[slow]._correction = std::move(nodes[org]._correction);
+            }
             nodes[org]._predictor._data = nullptr;
             assert(nodes[shigh]._predictor._q.cnt() > 0);
             assert(nodes[slow]._predictor._q.cnt() > 0);
