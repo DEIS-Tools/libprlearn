@@ -15,7 +15,6 @@ BOOST_AUTO_TEST_CASE(Dummy) {
 }
 
 BOOST_AUTO_TEST_CASE(Linear) {
-    std::cerr << "Linear" << std::endl;
     std::vector<QLearning<RefinementTree>> learners;
     learners.emplace_back();
     prlearn::propts_t options;
@@ -27,20 +26,19 @@ BOOST_AUTO_TEST_CASE(Linear) {
     {
         points[0] = dist(e);
         points[1] = dist(e);
-        double val = points[0] + points[1];
+        double val = points[0] + points[1] + 3;
         learners[0].addSample(2, points, nullptr, nullptr, 1, 0, 0, val, learners, true, 0, options);
         auto v2 = learners[0].lookup(0, points, 2);
         if(i > 1000)
         {
             auto diff = std::abs(v2.avg() - val);
-            BOOST_REQUIRE_LE(diff, 0.1);
+            BOOST_REQUIRE_LE(diff, 1);
         }
     }
     BOOST_REQUIRE(true);
 }
 
 BOOST_AUTO_TEST_CASE(Linear2) {
-    std::cerr << "Linear" << std::endl;
     std::vector<QLearning<RefinementTree>> learners;
     learners.emplace_back();
     prlearn::propts_t options;
@@ -52,13 +50,13 @@ BOOST_AUTO_TEST_CASE(Linear2) {
     {
         points[0] = dist(e);
         points[1] = dist(e);
-        double val = points[0]*0.1 + points[1]*10.0;
+        double val = points[0]*0.1 + points[1]*10.0 + 3;
         learners[0].addSample(2, points, nullptr, nullptr, 1, 0, 0, val, learners, true, 0, options);
         auto v2 = learners[0].lookup(0, points, 2);
         if(i > 1000)
         {
             auto diff = std::abs(v2.avg() - val);
-            BOOST_REQUIRE_LE(diff, 2);
+            BOOST_REQUIRE_LE(diff, 1);
         }
     }
     BOOST_REQUIRE(true);
@@ -77,13 +75,13 @@ BOOST_AUTO_TEST_CASE(LinearInv) {
     {
         points[0] = dist(e);
         points[1] = -dist(e);
-        double val = points[0] + points[1];
+        double val = points[0] + points[1] + 3;
         learners[0].addSample(2, points, nullptr, nullptr, 1, 0, 0, val, learners, true, 0, options);
         auto v2 = learners[0].lookup(0, points, 2);
         if(i > 1000)
         {
             auto diff = std::abs(v2.avg() - val);
-            BOOST_REQUIRE_LE(diff, 0.1);
+            BOOST_REQUIRE_LE(diff, 1);
         }
     }
     BOOST_REQUIRE(true);
@@ -98,14 +96,14 @@ BOOST_AUTO_TEST_CASE(LinearNoise) {
     std::uniform_real_distribution<> dist(0, 10);
     std::uniform_real_distribution<> noise(-1, 1);
     double points[]{0,0};
-    for(size_t i = 0; i < 3000 ; ++i)
+    for(size_t i = 0; i < 4000 ; ++i)
     {
         points[0] = dist(e);
         points[1] = dist(e);
-        double val = points[0] + points[1];
+        double val = points[0] + points[1] + 3;
         learners[0].addSample(2, points, nullptr, nullptr, 1, 0, 0, val + noise(e), learners, true, 0, options);
         auto v2 = learners[0].lookup(0, points, 2);
-        if(i > 1000)
+        if(i > 3000)
         {
             auto diff = std::abs(v2.avg() - val);
             BOOST_REQUIRE_LE(diff, 1);
@@ -126,13 +124,13 @@ BOOST_AUTO_TEST_CASE(Unused) {
     {
         points[0] = dist(e);
         points[1] = dist(e);
-        double val = points[0];
+        double val = points[0] + 3;
         learners[0].addSample(2, points, nullptr, nullptr, 1, 0, 0, val, learners, true, 0, options);
         auto v2 = learners[0].lookup(0, points, 2);
         if(i > 1000)
         {
             auto diff = std::abs(v2.avg() - val);
-            BOOST_REQUIRE_LE(diff, 0.1);
+            BOOST_REQUIRE_LE(diff, 1);
         }
     }
     BOOST_REQUIRE(true);
@@ -153,13 +151,13 @@ BOOST_AUTO_TEST_CASE(Indep2) {
     {
         points[0] = dist(e);
         points[1] = 0;
-        double val = points[0] + points[1];
+        double val = points[0] + points[1] + 3;
         learners[0].addSample(2, points, nullptr, nullptr, 1, 0, 0, val, learners, true, 0, options);
         auto v2 = learners[0].lookup(0, points, 2);
         if(i > 1000)
         {
             auto diff = std::abs(v2.avg() - val);
-            BOOST_REQUIRE_LE(diff, 0.5);
+            BOOST_REQUIRE_LE(diff, 1);
             if(diff > od)
                 std::cerr << "DIFF " << diff << std::endl;
             od = std::max(diff, od);
@@ -179,17 +177,17 @@ BOOST_AUTO_TEST_CASE(PartDep) {
     double points[]{0,0};
     double od = 0;
 
-    for(size_t i = 0; i < 3000 ; ++i)
+    for(size_t i = 0; i < 4000 ; ++i)
     {
         points[0] = dist(e);
         points[1] = dist(e) + points[0]*0.5;
-        double val = points[0] + points[1];
+        double val = points[0] + points[1] + 3;
         learners[0].addSample(2, points, nullptr, nullptr, 1, 0, 0, val, learners, true, 0, options);
         auto v2 = learners[0].lookup(0, points, 2);
-        if(i > 1000)
+        if(i > 3000)
         {
             auto diff = std::abs(v2.avg() - val);
-            BOOST_REQUIRE_LE(diff, 0.5);
+            BOOST_REQUIRE_LE(diff, 1);
             if(diff > od)
                 std::cerr << "DIFF " << diff << std::endl;
             od = std::max(diff, od);
@@ -210,18 +208,18 @@ BOOST_AUTO_TEST_CASE(CoDep) {
     double points[]{0,0};
     double od = 0;
 
-    for(size_t i = 0; i < 3000 ; ++i)
+    for(size_t i = 0; i < 10000 ; ++i)
     {
         points[0] = dist(e);
         points[1] = points[0] + noise(e);
-        double val = points[0] + points[1];
+        double val = points[0] + points[1] + 3;
         learners[0].addSample(2, points, nullptr, nullptr, 1, 0, 0, val, learners, true, 0, options);
         auto v2 = learners[0].lookup(0, points, 2);
         if(i > 1000)
         {
             auto diff = std::abs(v2.avg() - val);
-            BOOST_REQUIRE_LE(diff, 5);
-            if(diff > od)
+            BOOST_REQUIRE_LE(diff, 2);
+            if(diff > 1)
                 std::cerr << "DIFF " << diff << std::endl;
             od = std::max(diff, od);
         }

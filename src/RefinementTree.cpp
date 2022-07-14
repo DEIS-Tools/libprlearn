@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <glpk.h>
 #include <iostream>
+#include <filesystem>
 
 namespace prlearn {
 
@@ -209,7 +210,6 @@ namespace prlearn {
         double val = _predictor._q.avg();
         if(_correction)
         {
-            val += _correction[dimen];
             for(size_t i = 0; i < dimen; ++i)
             {
                 val += _correction[i] * point[i];
@@ -220,6 +220,8 @@ namespace prlearn {
 
     std::unique_ptr<double[]> RefinementTree::node_t::get_correction(size_t dimen)
     {
+        // find dimension with strongest correlation ~ smallest variance
+#ifdef LPCORRECTION
         if(_predictor._q._variance == 0)
             return nullptr;
         auto* lp = glp_create_prob();
@@ -325,6 +327,7 @@ namespace prlearn {
         else correction = nullptr;
         //std::exit(-1);
         return correction;
+#endif
     }
 
     void RefinementTree::node_t::update(const double* point, size_t dimen, double nval, std::vector<node_t>& nodes, double delta, const propts_t& options) {
@@ -333,7 +336,6 @@ namespace prlearn {
             _predictor._data = std::make_unique < qdata_t[]>(dimen);
         if(_correction)
         {
-            nval -= _correction[dimen];
             for(size_t i = 0; i < dimen; ++i)
                 nval -= _correction[i] * point[i];
         }
@@ -418,21 +420,33 @@ namespace prlearn {
             nodes[shigh]._predictor._cnt = nodes[shigh]._predictor._q.cnt();
             nodes[slow]._predictor._cnt = nodes[slow]._predictor._q.cnt();
             tmp.swap(nodes[org]._predictor._data);
-            auto correction = nodes[org].get_correction(dimen);
-            if(correction != nullptr)
+            //auto correction = nodes[org].get_correction(dimen);
+            /*if(correction != nullptr)
             {
                 nodes[shigh]._correction = std::make_unique<double[]>(dimen + 1);
                 std::copy(correction.get(), correction.get() + dimen + 1, nodes[shigh]._correction.get());
                 nodes[slow]._correction = std::move(correction);
                 nodes[org]._correction = nullptr;
             }
-            else if(nodes[org]._correction != nullptr)
+            else*/
+            nodes[shigh]._correction = std::make_unique<double[]>(dimen);
+            if(nodes[org]._correction != nullptr)
             {
-                nodes[shigh]._correction = std::make_unique<double[]>(dimen + 1);
-                std::copy(nodes[org]._correction.get(), nodes[org]._correction.get() + dimen + 1, nodes[shigh]._correction.get());
+                std::copy(nodes[org]._correction.get(), nodes[org]._correction.get() + dimen, nodes[shigh]._correction.get());
                 nodes[slow]._correction = std::move(nodes[org]._correction);
                 nodes[org]._correction = nullptr;
             }
+            else nodes[slow]._correction = std::make_unique<double[]>(dimen);
+            auto change = nodes[org]._predictor._data[svar]._highq.avg() - nodes[org]._predictor._data[svar]._lowq.avg();
+            change /= (nodes[org]._predictor._data[svar]._hmid._avg - nodes[org]._predictor._data[svar]._lmid._avg);
+            nodes[slow]._correction[svar] += change;
+            nodes[slow]._predictor._q.avg() -= change*nodes[org]._predictor._data[svar]._lmid._avg;
+            nodes[shigh]._predictor._q.avg() -= change*nodes[org]._predictor._data[svar]._hmid._avg;
+            //            nodes[slow]._correction[dimen] += nodes[org]._predictor._data[svar]._lowq.avg()-(nodes[org]._predictor._data[svar]._lmid._avg*nodes[slow]._correction[svar]);
+            nodes[shigh]._correction[svar] = nodes[slow]._correction[svar];
+//            nodes[shigh]._correction[dimen] = nodes[slow]._correction[dimen];
+            //std::cerr << change << " vs " << nodes[org]._predictor._data[svar]._lowq.avg() << " :: " << nodes[org]._predictor._data[svar]._lmid._avg << std::endl;
+            //std::cerr << "NEQ [" << nodes[slow]._correction[0] << ", " << nodes[slow]._correction[1] << "]" << std::endl;
             nodes[org]._predictor._data = nullptr;
             assert(nodes[shigh]._predictor._q.cnt() > 0);
             assert(nodes[slow]._predictor._q.cnt() > 0);
