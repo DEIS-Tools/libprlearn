@@ -226,8 +226,8 @@ namespace prlearn {
         if(lp == nullptr)
             return nullptr;
 
-        const uint32_t nCol = dimen + dimen * 4 + 1; // each dimension + 4 slack variable for each dimension (pos/neg deviation) for each direction + constant
-        const int nRow = dimen * 2;
+        const uint32_t nCol = dimen + dimen * 4 + 1 + 2; // each dimension + 4 slack variable for each dimension (pos/neg deviation) for each direction + constant
+        const int nRow = dimen * 2 + 1;
         std::vector<int32_t> indir(std::max<uint32_t>(nCol, nRow) + 1);
         std::vector<double> row(nCol + 1);
         for(size_t i = 1; i < nCol + 1; ++i)
@@ -262,15 +262,31 @@ namespace prlearn {
                 row[dimen + 2 + d + dimen + (low ? 0 : dimen*2)] = -1; // slack
                 glp_set_mat_row(lp, rowno, nCol, indir.data(), row.data());
                 glp_set_row_bnds(lp, rowno, GLP_FX, qval.avg(), qval.avg());
-                //std::cerr << "[" << row[0] << "," << row[1] << "] = " << qval << std::endl;
+                std::cerr << "[" << row[1] << "," << row[2] << "] = " << qval << std::endl;
                 row[dimen + 2 + d + (low ? 0 : dimen)] = 0; // reset slack
                 row[dimen + 2 + d + dimen + (low ? 0 : dimen*2)] = 0; // slack
                 double r = std::sqrt(qval._variance)/std::sqrt(_predictor._q._variance);
-                glp_set_obj_coef(lp, dimen + 2 + d + (low ? 0 : dimen), (1.0/(1.0 + std::pow(r, 2.0))));
-                glp_set_obj_coef(lp, dimen + 2 + d + dimen + (low ? 0 : dimen*2), (1.0/(1.0 + r)));
+                glp_set_obj_coef(lp, dimen + 2 + d + (low ? 0 : dimen), 1/*(1.0/(1.0 + std::pow(r, 2.0)))*/);
+                glp_set_obj_coef(lp, dimen + 2 + d + dimen + (low ? 0 : dimen*2), 1/*(1.0/(1.0 + r))*/);
             }
         }
-
+        std::cerr << _predictor._q << std::endl;
+/*
+        for(size_t i = 0; i < dimen; ++i)
+        {
+            avg_t a = _predictor._data[i]._lmid;
+            a += _predictor._data[i]._hmid;
+            row[i+1] = a._avg;
+        }
+        row[dimen+1] = 1; // constant
+        row[dimen + 2 + dimen*4] = 1; // slack
+        row[dimen + 2 + dimen*4 + 1] = -1; // slack
+        ++rowno;
+        glp_set_mat_row(lp, rowno, nCol, indir.data(), row.data());
+        glp_set_row_bnds(lp, rowno, GLP_FX, _predictor._q.avg(), _predictor._q.avg());
+        glp_set_obj_coef(lp, dimen + 2 + dimen*4, 1);
+        glp_set_obj_coef(lp, dimen + 2 + dimen*4 + 1, 1);
+*/
         for(size_t i = 1; i <= nCol; i++) {
             glp_set_col_kind(lp, i, GLP_CV);
             if(i >= dimen + 2)
@@ -291,17 +307,23 @@ namespace prlearn {
         glp_init_smcp(&settings);
         settings.presolve = GLP_OFF;
         settings.msg_lev = 0;
+        //glp_write_lp(lp, nullptr, "lp");
         auto result = glp_simplex(lp, &settings);
         std::unique_ptr<double[]> correction = nullptr;
+//        std::cerr << "GOT SOLUTION ; " << result << " " << glp_get_status(lp) << std::endl;
         if(result == 0 && glp_get_status(lp) == GLP_OPT)
         {
             correction = std::make_unique<double[]>(dimen + 1);
             for(size_t i = 0; i < dimen + 1; ++i)
             {
                 correction[i] = glp_get_col_prim(lp, i+1) + (_correction != nullptr ? _correction[i] : 0);
+                std::cerr << "[" << i << "] = " << correction[i] << " (" << glp_get_col_prim(lp, i+1) << ")" << std::endl;
             }
+            std::cerr << "QOS : " << glp_get_obj_val(lp) << std::endl;
+            //glp_print_sol(lp, "dummy");
         }
         else correction = nullptr;
+        //std::exit(-1);
         return correction;
     }
 
@@ -364,6 +386,8 @@ namespace prlearn {
             // this  <-- is invalidated below!
             nodes.emplace_back();
             nodes.emplace_back();
+            nodes[slow]._correction = nullptr;
+            nodes[shigh]._correction = nullptr;
             nodes[slow]._predictor._q = tmp[svar]._lowq;
             nodes[shigh]._predictor._q = tmp[svar]._highq;
             nodes[slow]._predictor._data = std::make_unique < qdata_t[]>(dimen);
@@ -402,11 +426,12 @@ namespace prlearn {
                 nodes[slow]._correction = std::move(correction);
                 nodes[org]._correction = nullptr;
             }
-            else if(_correction != nullptr)
+            else if(nodes[org]._correction != nullptr)
             {
                 nodes[shigh]._correction = std::make_unique<double[]>(dimen + 1);
                 std::copy(nodes[org]._correction.get(), nodes[org]._correction.get() + dimen + 1, nodes[shigh]._correction.get());
                 nodes[slow]._correction = std::move(nodes[org]._correction);
+                nodes[org]._correction = nullptr;
             }
             nodes[org]._predictor._data = nullptr;
             assert(nodes[shigh]._predictor._q.cnt() > 0);
