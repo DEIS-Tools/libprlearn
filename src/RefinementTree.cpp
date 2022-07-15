@@ -26,7 +26,9 @@
 #include "RefinementTree.h"
 #include <limits>
 #include <iomanip>
+#ifdef LP_CORRECTION
 #include <glpk.h>
+#endif
 #include <iostream>
 #include <filesystem>
 
