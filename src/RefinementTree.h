@@ -89,7 +89,6 @@ namespace prlearn {
             size_t get_leaf(const double* point, size_t current, const std::vector<node_t>& nodes) const;
             void update(const double* point, size_t dimen, double nval, std::vector<node_t>& nodes, double delta, const propts_t& options);
             void print(std::ostream& s, size_t tabs, const std::vector<node_t>& nodes) const;
-            avg_t skewer(const double* point, size_t dimen) const;
 
             node_t() = default;
             node_t(const node_t& other, size_t dimen);

@@ -30,6 +30,7 @@
 #include <iostream>
 #include <filesystem>
 
+
 namespace prlearn {
 
     RefinementTree::RefinementTree() {
@@ -154,50 +155,6 @@ namespace prlearn {
         }
     }
 
-    avg_t RefinementTree::node_t::skewer(const double* point, size_t dimen) const
-    {
-        avg_t sm;
-        if(_predictor._q._variance == 0)
-        {
-            sm += avg_t(_predictor._q.avg(), _predictor._cnt);
-        }
-        else
-        {
-            /*auto var = _predictor._cnt.
-            for (size_t i = 0; i < dimen; ++i) {
-                if(_predictor._data[i]._lowq.cnt() <= 1 ||
-                   _predictor._data[i]._highq.cnt() <= 1)
-                {
-                    sm += avg_t(_predictor._q.avg(), 1/std::sqrt(_predictor._q._variance));
-                }
-                else
-                {
-                    auto d = _predictor._data[i]._hmid._avg - _predictor._data[i]._lmid._avg;
-                    auto diff = _predictor._data[i]._highq.avg() - _predictor._data[i]._lowq.avg();
-                    auto delta = diff/d;
-                    auto nq = (point[i] - _predictor._data[i]._lmid._avg)*delta;
-                    auto p = (point[i] - _predictor._data[i]._lmid._avg) / d;
-                    double var = 0;
-                    if(_predictor._data[i]._lowq._variance == 0)
-                    sm += avg_t(nq, );
-                }
-
-                auto p = (point[i] - _predictor._data[i]._lmid._avg) / d;
-                if(point[i] <= _predictor._data[i]._lmid._avg)
-                    sm += avg_t(_predictor._data[i]._lowq.avg(), 1.0/std::sqrt(_predictor._data[i]._lowq._variance));
-                else if(point[i] >= _predictor._data[i]._hmid._avg)
-                    sm += avg_t(_predictor._data[i]._highq.avg(), 1.0/std::sqrt(_predictor._data[i]._highq._variance));
-                else
-                {
-                    auto d = _predictor._data[i]._hmid._avg - _predictor._data[i]._lmid._avg;
-                    auto p = (point[i] - _predictor._data[i]._lmid._avg) / d;
-                    sm += avg_t(p * _predictor._data[i]._lowq.avg() + (1.0-p)*_predictor._data[i]._highq.avg(), p/std::sqrt(_predictor._data[i]._lowq._variance) + (1.0-p)/std::sqrt(_predictor._data[i]._highq._variance));
-                }
-            }*/
-        }
-        return sm;
-    }
-
     size_t RefinementTree::node_t::get_leaf(const double* point, size_t current, const std::vector<node_t>& nodes) const {
         if (!_split._is_split) return current;
         if (point[_split._var] <= _split._boundary)
@@ -218,10 +175,10 @@ namespace prlearn {
         return val;
     }
 
-    std::unique_ptr<double[]> RefinementTree::node_t::get_correction(size_t dimen)
+    std::unique_ptr<double[]> RefinementTree::node_t::get_correction(size_t dimen [[maybe_unused]])
     {
         // find dimension with strongest correlation ~ smallest variance
-#ifdef LPCORRECTION
+#ifdef LP_CORRECTION
         if(_predictor._q._variance == 0)
             return nullptr;
         auto* lp = glp_create_prob();
@@ -264,15 +221,15 @@ namespace prlearn {
                 row[dimen + 2 + d + dimen + (low ? 0 : dimen*2)] = -1; // slack
                 glp_set_mat_row(lp, rowno, nCol, indir.data(), row.data());
                 glp_set_row_bnds(lp, rowno, GLP_FX, qval.avg(), qval.avg());
-                std::cerr << "[" << row[1] << "," << row[2] << "] = " << qval << std::endl;
+                //std::cerr << "[" << row[1] << "," << row[2] << "] = " << qval << std::endl;
                 row[dimen + 2 + d + (low ? 0 : dimen)] = 0; // reset slack
                 row[dimen + 2 + d + dimen + (low ? 0 : dimen*2)] = 0; // slack
                 double r = std::sqrt(qval._variance)/std::sqrt(_predictor._q._variance);
-                glp_set_obj_coef(lp, dimen + 2 + d + (low ? 0 : dimen), 1/*(1.0/(1.0 + std::pow(r, 2.0)))*/);
-                glp_set_obj_coef(lp, dimen + 2 + d + dimen + (low ? 0 : dimen*2), 1/*(1.0/(1.0 + r))*/);
+                glp_set_obj_coef(lp, dimen + 2 + d + (low ? 0 : dimen), (1.0/(1.0 + std::pow(r, 2.0))));
+                glp_set_obj_coef(lp, dimen + 2 + d + dimen + (low ? 0 : dimen*2), (1.0/(1.0 + r)));
             }
         }
-        std::cerr << _predictor._q << std::endl;
+        //std::cerr << _predictor._q << std::endl;
 /*
         for(size_t i = 0; i < dimen; ++i)
         {
@@ -315,18 +272,20 @@ namespace prlearn {
 //        std::cerr << "GOT SOLUTION ; " << result << " " << glp_get_status(lp) << std::endl;
         if(result == 0 && glp_get_status(lp) == GLP_OPT)
         {
-            correction = std::make_unique<double[]>(dimen + 1);
-            for(size_t i = 0; i < dimen + 1; ++i)
+            correction = std::make_unique<double[]>(dimen);
+            for(size_t i = 0; i < dimen; ++i)
             {
                 correction[i] = glp_get_col_prim(lp, i+1) + (_correction != nullptr ? _correction[i] : 0);
-                std::cerr << "[" << i << "] = " << correction[i] << " (" << glp_get_col_prim(lp, i+1) << ")" << std::endl;
+                //std::cerr << "[" << i << "] = " << correction[i] << " (" << glp_get_col_prim(lp, i+1) << ")" << std::endl;
             }
-            std::cerr << "QOS : " << glp_get_obj_val(lp) << std::endl;
+            //std::cerr << "QOS : " << glp_get_obj_val(lp) << std::endl;
             //glp_print_sol(lp, "dummy");
         }
         else correction = nullptr;
         //std::exit(-1);
         return correction;
+#else
+        return nullptr;
 #endif
     }
 
@@ -420,15 +379,18 @@ namespace prlearn {
             nodes[shigh]._predictor._cnt = nodes[shigh]._predictor._q.cnt();
             nodes[slow]._predictor._cnt = nodes[slow]._predictor._q.cnt();
             tmp.swap(nodes[org]._predictor._data);
-            //auto correction = nodes[org].get_correction(dimen);
-            /*if(correction != nullptr)
-            {
-                nodes[shigh]._correction = std::make_unique<double[]>(dimen + 1);
-                std::copy(correction.get(), correction.get() + dimen + 1, nodes[shigh]._correction.get());
+#ifdef LP_CORRECTION
+            auto correction = nodes[org].get_correction(dimen);
+            if(correction != nullptr)
                 nodes[slow]._correction = std::move(correction);
-                nodes[org]._correction = nullptr;
+            else
+                nodes[slow]._correction = std::move(nodes[org]._correction);
+            if(nodes[slow]._correction)
+            {
+                nodes[shigh]._correction = std::make_unique<double[]>(dimen);
+                std::copy(nodes[slow]._correction.get(), nodes[slow]._correction.get() + dimen, nodes[shigh]._correction.get());
             }
-            else*/
+#else
             nodes[shigh]._correction = std::make_unique<double[]>(dimen);
             if(nodes[org]._correction != nullptr)
             {
@@ -444,6 +406,7 @@ namespace prlearn {
             nodes[shigh]._predictor._q.avg() -= change*nodes[org]._predictor._data[svar]._hmid._avg;
             //            nodes[slow]._correction[dimen] += nodes[org]._predictor._data[svar]._lowq.avg()-(nodes[org]._predictor._data[svar]._lmid._avg*nodes[slow]._correction[svar]);
             nodes[shigh]._correction[svar] = nodes[slow]._correction[svar];
+#endif
 //            nodes[shigh]._correction[dimen] = nodes[slow]._correction[dimen];
             //std::cerr << change << " vs " << nodes[org]._predictor._data[svar]._lowq.avg() << " :: " << nodes[org]._predictor._data[svar]._lmid._avg << std::endl;
             //std::cerr << "NEQ [" << nodes[slow]._correction[0] << ", " << nodes[slow]._correction[1] << "]" << std::endl;
