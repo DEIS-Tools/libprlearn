@@ -174,7 +174,7 @@ namespace prlearn {
                 val += _correction[i] * point[i];
             }
         }
-        return val;
+        return std::min(std::max(val, _predictor._q.avg() + _dev),  _predictor._q.avg()-_dev);
     }
 
     std::unique_ptr<double[]> RefinementTree::node_t::get_correction(size_t dimen [[maybe_unused]])
@@ -297,8 +297,8 @@ namespace prlearn {
             _predictor._data = std::make_unique < qdata_t[]>(dimen);
         if(_correction)
         {
-            for(size_t i = 0; i < dimen; ++i)
-                nval -= _correction[i] * point[i];
+            /*for(size_t i = 0; i < dimen; ++i)
+                nval -= _correction[i] * point[i];*/
         }
         // let us start by enforcing the learning-rate
         _predictor._q.cnt() = std::min<size_t>(_predictor._q.cnt(), options._q_learn_rate);

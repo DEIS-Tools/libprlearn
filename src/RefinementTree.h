@@ -85,6 +85,7 @@ namespace prlearn {
             simple_split_t _split;
             qpred_t _predictor;
             std::unique_ptr<double[]> _correction = nullptr;
+            double _dev = 0;
 
             size_t get_leaf(const double* point, size_t current, const std::vector<node_t>& nodes) const;
             void update(const double* point, size_t dimen, double nval, std::vector<node_t>& nodes, double delta, const propts_t& options);
