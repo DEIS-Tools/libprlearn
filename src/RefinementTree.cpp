@@ -415,8 +415,8 @@ namespace prlearn {
 //            nodes[shigh]._correction[dimen] = nodes[slow]._correction[dimen];
             //std::cerr << change << " vs " << nodes[org]._predictor._data[svar]._lowq.avg() << " :: " << nodes[org]._predictor._data[svar]._lmid._avg << std::endl;
             //std::cerr << "NEQ [" << nodes[slow]._correction[0] << ", " << nodes[slow]._correction[1] << "]" << std::endl;
-            nodes[slow]._dev = std::sqrt(nodes[org]._predictor._data[svar]._lowq._variance)*0.0;
-            nodes[shigh]._dev = std::sqrt(nodes[org]._predictor._data[svar]._highq._variance)*0.0;
+            nodes[slow]._dev = std::sqrt(nodes[org]._predictor._data[svar]._lowq._variance)*2.0;
+            nodes[shigh]._dev = std::sqrt(nodes[org]._predictor._data[svar]._highq._variance)*2.0;
             nodes[org]._predictor._data = nullptr;
             assert(nodes[shigh]._predictor._q.cnt() > 0);
             assert(nodes[slow]._predictor._q.cnt() > 0);
