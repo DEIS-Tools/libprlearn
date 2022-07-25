@@ -166,7 +166,7 @@ namespace prlearn {
     }
 
     double RefinementTree::node_t::get_val(size_t dimen, const double* point) const {
-        double val = _predictor._q.avg();
+        double val = 0.0;
         if(_correction)
         {
             for(size_t i = 0; i < dimen; ++i)
@@ -174,7 +174,7 @@ namespace prlearn {
                 val += _correction[i] * point[i];
             }
         }
-        return std::min(std::max(val, _predictor._q.avg() + _dev),  _predictor._q.avg()-_dev);
+        return std::min(std::max(val, -_dev), _dev) + _predictor._q.avg();
     }
 
     std::unique_ptr<double[]> RefinementTree::node_t::get_correction(size_t dimen [[maybe_unused]])
@@ -297,8 +297,11 @@ namespace prlearn {
             _predictor._data = std::make_unique < qdata_t[]>(dimen);
         if(_correction)
         {
-            /*for(size_t i = 0; i < dimen; ++i)
-                nval -= _correction[i] * point[i];*/
+            double pt = 0;
+            for(size_t i = 0; i < dimen; ++i)
+                pt += _correction[i] * point[i];
+            pt = std::min(std::max(pt, -_dev), _dev);
+            nval -= pt;
         }
         // let us start by enforcing the learning-rate
         _predictor._q.cnt() = std::min<size_t>(_predictor._q.cnt(), options._q_learn_rate);
@@ -412,6 +415,8 @@ namespace prlearn {
 //            nodes[shigh]._correction[dimen] = nodes[slow]._correction[dimen];
             //std::cerr << change << " vs " << nodes[org]._predictor._data[svar]._lowq.avg() << " :: " << nodes[org]._predictor._data[svar]._lmid._avg << std::endl;
             //std::cerr << "NEQ [" << nodes[slow]._correction[0] << ", " << nodes[slow]._correction[1] << "]" << std::endl;
+            nodes[slow]._dev = std::sqrt(nodes[org]._predictor._data[svar]._lowq._variance)*3.0;
+            nodes[shigh]._dev = std::sqrt(nodes[org]._predictor._data[svar]._highq._variance)*3.0;
             nodes[org]._predictor._data = nullptr;
             assert(nodes[shigh]._predictor._q.cnt() > 0);
             assert(nodes[slow]._predictor._q.cnt() > 0);
