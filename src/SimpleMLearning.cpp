@@ -110,14 +110,14 @@ namespace prlearn {
             for(auto& s : n._succssors)
             {
                 const auto dif = std::abs(s._cost.avg() - nq._avg);
-                const auto std = std::sqrt(s._cost._variance);
+                const auto std = std::sqrt(s._cost.variance());
                 auto var = (std::pow(dif + std, 2.0) + std::pow(dif - std, 2.0)) / 2.0;
                 nv.addPoints(s._cost.cnt(), var);
             }
             n._q = qvar_t(nq._avg, nq._cnt, nv._avg);
             if ((minimization && n._q.avg() <= rq.avg()) ||
                     (!minimization && n._q.avg() >= rq.avg())) {
-                if(n._q.avg() != rq.avg() || n._q._variance < rq._variance || n._q.cnt() > rq.cnt())
+                if(n._q.avg() != rq.avg() || n._q.variance() < rq.variance() || n._q.cnt() > rq.cnt())
                     rq = n._q;
             }
         }
