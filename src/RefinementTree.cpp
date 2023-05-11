@@ -1,24 +1,24 @@
 /*
  * Copyright Peter G. Jensen
- *  
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* 
+/*
  * File:   RefinementTree.cpp
  * Author: Peter G. Jensen
- * 
+ *
  * Created on July 18, 2017, 5:09 PM
  */
 
@@ -72,17 +72,37 @@ namespace prlearn {
         return qvar_t(node._predictor._q.avg(), node._predictor._cnt, node._predictor._q._variance);
     }
 
-    double RefinementTree::getBestQ(const double* point, bool minimization) const {
+    double RefinementTree::getBestQ(const double* point, bool minimization, size_t* next_labels, size_t n_labels) const {
         auto val = std::numeric_limits<double>::infinity();
         if (!minimization)
             val = -val;
-        for (const el_t& el : _mapping) {
-            auto node = _nodes[el._nid].get_leaf(point, el._nid, _nodes);
-            auto v = _nodes[node]._predictor._q.avg();
-            if (!std::isinf(v) && !std::isnan(v))
-                val = minimization ?
-                    std::min(v, val) :
-                std::max(v, val);
+        if(next_labels == nullptr)
+        {
+            for (const el_t& el : _mapping) {
+                auto node = _nodes[el._nid].get_leaf(point, el._nid, _nodes);
+                auto v = _nodes[node]._predictor._q.avg();
+                if (!std::isinf(v) && !std::isnan(v))
+                    val = minimization ?
+                        std::min(v, val) :
+                    std::max(v, val);
+            }
+        }
+        else {
+            size_t j = 0;
+            for(size_t i = 0; i < n_labels; ++i)
+            {
+                for(;j < _mapping.size() && _mapping[j]._label < next_labels[i]; ++j) {};
+                if(j >= _mapping.size()) return val;
+                if(_mapping[j]._label != next_labels[i])
+                    continue;
+                const auto& res = _mapping[j];
+                auto node = _nodes[res._nid].get_leaf(point, res._nid, _nodes);
+                auto v = _nodes[node]._predictor._q.avg();
+                if (!std::isinf(v) && !std::isnan(v))
+                    val = minimization ?
+                        std::min(v, val) :
+                    std::max(v, val);
+            }
         }
         return val;
     }
@@ -161,7 +181,7 @@ namespace prlearn {
                 _predictor._data[i]._hmid += point[i];
             }
 
-            // update the split-filters 
+            // update the split-filters
             _predictor._data[i]._splitfilter.add(_predictor._data[i]._lowq,
                     _predictor._data[i]._highq,
                     delta * options._indefference,

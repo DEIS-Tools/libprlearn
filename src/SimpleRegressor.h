@@ -52,15 +52,24 @@ namespace prlearn {
                 return qvar_t{std::numeric_limits<double>::quiet_NaN(), 0, 0};
         }
 
-        double getBestQ(const double*, bool minimization) const {
+        double getBestQ(const double*, bool minimization, size_t* next_labels = nullptr, size_t n_labels = 0) const {
             double res = std::numeric_limits<double>::infinity();
             if (!minimization)
                 res = -res;
+            size_t j = 0;
             for (auto& e : _labels)
+            {
+                if(next_labels != nullptr)
+                {
+                    for(;j < n_labels && next_labels[j] < e._label; ++j) {}
+                    if(j >= n_labels) return res;
+                    if(next_labels[j] != e._label) continue;
+                }
                 if (!std::isinf(e._value.avg()) && !std::isnan(e._value.avg()))
                     res = minimization ?
                         std::min(res, e._value.avg()) :
                     std::max(res, e._value.avg());
+            }
             return res;
         }
 
