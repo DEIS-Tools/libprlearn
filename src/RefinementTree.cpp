@@ -67,7 +67,6 @@ namespace prlearn {
         auto res = std::lower_bound(std::begin(_mapping), std::end(_mapping), lf);
         if (res == std::end(_mapping) || res->_label != label)
             return qvar_t(std::numeric_limits<double>::quiet_NaN(), 0, 0);
-        assert(dimen == _dimen);
         auto n = _nodes[res->_nid].get_leaf(point, res->_nid, _nodes);
         auto& node = _nodes[n];
         return qvar_t(node._predictor._q.avg(), node._predictor._cnt, node._predictor._q._variance);
@@ -146,7 +145,7 @@ namespace prlearn {
             _predictor._data = std::make_unique < qdata_t[]>(dimen);
 
         // let us start by enforcing the learning-rate
-        _predictor._q.cnt() = std::min<size_t>(_predictor._q.cnt(), options._q_learn_rate);
+        _predictor._q.cnt() = std::min<double>(std::max<double>(_predictor._q.cnt(), std::sqrt(_predictor._q.cnt())), options._q_learn_rate);
         _predictor._q += nval;
         ++_predictor._cnt;
         auto svar = 0;

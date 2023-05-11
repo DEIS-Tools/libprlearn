@@ -1,21 +1,21 @@
 /*
  * Copyright Peter G. Jensen
- *  
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* 
+/*
  * File:   SimpleRegressor.h
  * Author: Peter G. Jensen
  *
@@ -71,7 +71,7 @@ namespace prlearn {
 
             if (res == std::end(_labels) || res->_label != label)
                 res = _labels.insert(res, lf);
-            res->_value.cnt() = std::min<size_t>(res->_cnt, options._q_learn_rate);
+            res->_value.cnt() = std::min<double>(std::max<double>(res->_cnt, std::sqrt(res->_cnt)), options._q_learn_rate);
             res->_cnt += 1;
             res->_value += nval;
             assert(res->_value.avg() >= 0);
