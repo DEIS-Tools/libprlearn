@@ -26,11 +26,13 @@
 #define PROPTS_H
 
 #include <cstddef>
+#include <limits>
+
 namespace prlearn {
     // primed for Q-learning
 
     struct propts_t {
-        size_t _q_learn_rate = 2; // only QLearning
+        size_t _q_learn_rate = std::numeric_limits<size_t>::max(); // only QLearning
         double _upper_t = 1.75;
         double _lower_t = 0.15;
         double _ks_limit = 0.25;
