@@ -80,7 +80,7 @@ namespace prlearn {
 
             if (res == std::end(_labels) || res->_label != label)
                 res = _labels.insert(res, lf);
-            res->_value.cnt() = std::min<double>(std::max<double>(res->_cnt, std::sqrt(res->_cnt)), options._q_learn_rate);
+            res->_value.cnt() = std::min<double>(std::max<double>(res->_cnt, std::log(res->_cnt)), options._q_learn_rate);
             res->_cnt += 1;
             res->_value += nval;
             assert(res->_value.avg() >= 0);
