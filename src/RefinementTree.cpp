@@ -26,6 +26,7 @@
 #include "RefinementTree.h"
 #include <limits>
 #include <iomanip>
+#include <iostream>
 
 namespace prlearn {
 
@@ -69,7 +70,7 @@ namespace prlearn {
             return qvar_t(std::numeric_limits<double>::quiet_NaN(), 0, 0);
         auto n = _nodes[res->_nid].get_leaf(point, res->_nid, _nodes);
         auto& node = _nodes[n];
-        return qvar_t(node._predictor._q.avg(), node._predictor._cnt, node._predictor._q.squared());
+        return qvar_t(node._predictor._q.avg(), node._predictor._q.cnt(), node._predictor._q.squared());
     }
 
     double RefinementTree::getBestQ(const double* point, bool minimization, size_t* next_labels, size_t n_labels) const {
@@ -163,11 +164,7 @@ namespace prlearn {
         assert(!_split._is_split);
         if (_predictor._data == nullptr)
             _predictor._data = std::make_unique < qdata_t[]>(dimen);
-
-        // let us start by enforcing the learning-rate
-        _predictor._q.cnt() = std::min<size_t>(_predictor._q.cnt(), options._q_learn_rate);
         _predictor._q += nval;
-        ++_predictor._cnt;
         auto svar = 0;
         auto cnt = 0;
 
@@ -240,8 +237,6 @@ namespace prlearn {
                     nodes[shigh]._predictor._q.squared() = std::pow(oq.avg(), 2.0);
                 }
             }
-            nodes[shigh]._predictor._cnt = nodes[shigh]._predictor._q.cnt();
-            nodes[slow]._predictor._cnt = nodes[slow]._predictor._q.cnt();
             assert(nodes[shigh]._predictor._q.cnt() > 0);
             assert(nodes[slow]._predictor._q.cnt() > 0);
         } else {

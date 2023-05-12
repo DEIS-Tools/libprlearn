@@ -52,6 +52,27 @@ namespace prlearn {
         return o;
     }
 
+    rqvar_t::rqvar_t(qvar_t other) : qvar_t(other.avg(), other.cnt(), other.squared()) {
+    }
+
+    rqvar_t& rqvar_t::operator+=(double d) {
+        assert(!std::isinf(d));
+        if(_cnt == 0)
+        {
+            _avg = d;
+        }
+        else
+        {
+            const auto frac = 1.0/std::max(std::sqrt(_cnt), std::min(2.0, _cnt));
+            _avg = ((1.0-frac)*_avg) + (frac * d);
+        }
+        ++_cnt;
+        
+        auto diff = std::pow(d, 2.0) - _sq;
+        _sq += diff / _cnt;
+        return *this;
+    }
+
     qvar_t qvar_t::approximate(const qvar_t& a, const qvar_t& b) {
         if (a._cnt == 0)
             return b;

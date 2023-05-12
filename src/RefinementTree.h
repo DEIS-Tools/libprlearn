@@ -72,8 +72,7 @@ namespace prlearn {
                         _data[i] = other._data[i];
                 }
             }
-            qvar_t _q;
-            size_t _cnt = 0;
+            rqvar_t _q;
             std::unique_ptr<qdata_t[] > _data = nullptr;
         };
 

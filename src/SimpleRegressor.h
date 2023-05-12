@@ -47,7 +47,7 @@ namespace prlearn {
             auto res = std::lower_bound(std::begin(_labels), std::end(_labels), lf);
 
             if (res != std::end(_labels) && res->_label == label)
-                return qvar_t{res->_value.avg(), (double)res->_cnt, res->_value.squared()};
+                return qvar_t{res->_value.avg(), (double)res->_value.cnt(), res->_value.squared()};
             else
                 return qvar_t{std::numeric_limits<double>::quiet_NaN(), 0, 0};
         }
@@ -73,15 +73,13 @@ namespace prlearn {
             return res;
         }
 
-        void update(size_t label, const double*, size_t dimen, double nval, const double delta, const propts_t& options) {
+        void update(size_t label, const double*, size_t dimen, double nval, const double delta, const propts_t&) {
             el_t lf(label);
 
             auto res = std::lower_bound(std::begin(_labels), std::end(_labels), lf);
 
             if (res == std::end(_labels) || res->_label != label)
                 res = _labels.insert(res, lf);
-            res->_value.cnt() = std::min<size_t>(res->_cnt, options._q_learn_rate);
-            res->_cnt += 1;
             res->_value += nval;
             assert(res->_value.avg() >= 0);
         }
@@ -119,8 +117,7 @@ namespace prlearn {
                 _value += d;
             };
             size_t _label = 0;
-            qvar_t _value;
-            size_t _cnt = 0;
+            rqvar_t _value;
 
             bool operator<(const el_t& other) const {
                 return _label < other._label;

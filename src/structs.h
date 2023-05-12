@@ -94,7 +94,7 @@ namespace prlearn {
 
     std::ostream& operator<<(std::ostream& stream, const avg_t& el);
 
-    struct qvar_t : private avg_t {
+    struct qvar_t : protected avg_t {
 
         qvar_t() = default;
 
@@ -147,9 +147,26 @@ namespace prlearn {
             return _sq;
         }
 
-    private:
+    protected:
         double _sq = 0;
     };
+
+    struct rqvar_t : protected qvar_t {
+        using qvar_t::qvar_t;
+        using qvar_t::avg;
+        using qvar_t::cnt;
+        using qvar_t::print;
+        using qvar_t::squared;
+        using qvar_t::set_variance;
+        rqvar_t(qvar_t);
+        // this is a dirty hijack!
+        rqvar_t& operator+=(double d);
+
+        static rqvar_t approximate(const rqvar_t& a, const rqvar_t& b) {
+            return rqvar_t(qvar_t::approximate(a, b));
+        }
+    };
+
 
     struct splitfilter_t {
         double _vfilter = 0.0;
