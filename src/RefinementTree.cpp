@@ -240,8 +240,8 @@ namespace prlearn {
                     nodes[shigh]._predictor._q._variance = 0;
                 }
             }
-            nodes[shigh]._predictor._cnt = std::min(nodes[shigh]._predictor._q.cnt(), 2.0);
-            nodes[slow]._predictor._cnt = std::min(nodes[slow]._predictor._q.cnt(), 2.0);
+            nodes[shigh]._predictor._cnt = nodes[shigh]._predictor._q.cnt();
+            nodes[slow]._predictor._cnt = nodes[slow]._predictor._q.cnt();
             assert(nodes[shigh]._predictor._q.cnt() > 0);
             assert(nodes[slow]._predictor._q.cnt() > 0);
         } else {
