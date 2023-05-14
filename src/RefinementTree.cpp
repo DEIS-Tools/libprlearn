@@ -165,7 +165,7 @@ namespace prlearn {
             _predictor._data = std::make_unique < qdata_t[]>(dimen);
 
         // let us start by enforcing the learning-rate
-        _predictor._q.cnt() = std::min<double>(std::max<double>(_predictor._q.cnt(), std::log(_predictor._q.cnt())), options._q_learn_rate);
+        _predictor._q.cnt() = std::min<double>(std::max<double>(1, std::log(_predictor._cnt)), options._q_learn_rate);
         _predictor._q += nval;
         ++_predictor._cnt;
         auto svar = 0;
