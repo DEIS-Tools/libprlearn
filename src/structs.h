@@ -129,7 +129,7 @@ namespace prlearn {
         static qvar_t approximate(const qvar_t& a, const qvar_t& b);
     };
 
-    struct rqvar_t : private qvar_t {
+    struct rqvar_t : public qvar_t {
         using qvar_t::qvar_t;
         rqvar_t(qvar_t);
         // this is a dirty hijack!

@@ -73,7 +73,7 @@ namespace prlearn {
             return res;
         }
 
-        void update(size_t label, const double*, size_t dimen, double nval, const double delta, const propts_t& options) {
+        void update(size_t label, const double*, size_t dimen, double nval, const double delta, const propts_t&) {
             el_t lf(label);
 
             auto res = std::lower_bound(std::begin(_labels), std::end(_labels), lf);

@@ -55,7 +55,7 @@ namespace prlearn {
         struct qdata_t {
             avg_t _midpoint;
             avg_t _lmid, _hmid;
-            qvar_t _lowq, _highq;
+            rqvar_t _lowq, _highq;
             splitfilter_t _splitfilter;
         };
 
@@ -72,8 +72,7 @@ namespace prlearn {
                         _data[i] = other._data[i];
                 }
             }
-            qvar_t _q;
-            size_t _cnt = 0;
+            rqvar_t _q;
             std::unique_ptr<qdata_t[] > _data = nullptr;
         };
 
