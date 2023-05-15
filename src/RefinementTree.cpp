@@ -26,6 +26,7 @@
 #include "RefinementTree.h"
 #include <limits>
 #include <iomanip>
+#include <iostream>
 
 namespace prlearn {
 
@@ -163,9 +164,15 @@ namespace prlearn {
         assert(!_split._is_split);
         if (_predictor._data == nullptr)
             _predictor._data = std::make_unique < qdata_t[]>(dimen);
-
         // let us start by enforcing the learning-rate
-        _predictor._q.cnt() = std::min<double>(std::max<double>(1, std::log(_predictor._cnt)), options._q_learn_rate);
+        if(std::log(_predictor._cnt) <= 2)
+        {
+            _predictor._q.cnt() = std::min<double>(2, _predictor._q.cnt());
+        }
+        else
+        {
+            _predictor._q.cnt() = std::min<double>(std::log(_predictor._cnt), options._q_learn_rate);
+        }
         _predictor._q += nval;
         ++_predictor._cnt;
         auto svar = 0;

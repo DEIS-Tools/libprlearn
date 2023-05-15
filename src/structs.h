@@ -1,21 +1,21 @@
 /*
  * Copyright Peter G. Jensen
- *  
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* 
+/*
  * File:   structs.h
  * Author: Peter G. Jensen
  *
@@ -92,7 +92,7 @@ namespace prlearn {
 
     std::ostream& operator<<(std::ostream& stream, const avg_t& el);
 
-    struct qvar_t : private avg_t {
+    struct qvar_t : protected avg_t {
 
         qvar_t() = default;
 
@@ -128,6 +128,22 @@ namespace prlearn {
         void print(std::ostream& stream) const;
         static qvar_t approximate(const qvar_t& a, const qvar_t& b);
     };
+
+    struct rqvar_t : private qvar_t {
+        using qvar_t::qvar_t;
+        rqvar_t(qvar_t);
+        // this is a dirty hijack!
+        rqvar_t& operator+=(double d);
+        void addPoints(double weight, double d);
+
+        bool operator!=(const rqvar_t& other) const {
+            return _cnt != other._cnt || _avg != other._avg;
+        }
+        static rqvar_t approximate(const rqvar_t& a, const rqvar_t& b) {
+            return rqvar_t(qvar_t::approximate(a, b));
+        }
+    };
+
 
     struct splitfilter_t {
         double _vfilter = 0.0;
