@@ -55,7 +55,7 @@ namespace prlearn {
         struct qdata_t {
             avg_t _midpoint;
             avg_t _lmid, _hmid;
-            rqvar_t _lowq, _highq;
+            qvar_t _lowq, _highq;
             splitfilter_t _splitfilter;
         };
 
