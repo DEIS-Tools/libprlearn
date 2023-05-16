@@ -60,21 +60,17 @@ namespace prlearn {
         if(_cnt == 0)
         {
             _avg = d;
+            _variance = 0;
         }
         else
         {
             const auto frac = 1.0/std::max(std::sqrt(_cnt), std::min(2.0, _cnt));
             _avg = ((1.0-frac)*_avg) + (frac * d);
+            auto nvar = std::pow(d - _avg, 2.0);
+            _variance = ((1.0-frac)*_variance) + (frac * nvar);
         }
         ++_cnt;
-        
-        auto nvar = std::pow(d - _avg, 2.0);
-        assert(!std::isinf(nvar));
-        if (_cnt == 1) _variance = nvar;
-        else {
-            nvar -= _variance;
-            _variance += nvar / _cnt;
-        }
+
         return *this;
     }
 
