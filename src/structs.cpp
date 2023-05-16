@@ -78,10 +78,6 @@ namespace prlearn {
         return *this;
     }
 
-    void rqvar_t::addPoints(double, double) {
-        assert(false);
-    }
-
     qvar_t qvar_t::approximate(const qvar_t& a, const qvar_t& b) {
         if (a._cnt == 0)
             return b;

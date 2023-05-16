@@ -122,6 +122,14 @@ namespace prlearn {
             return _cnt;
         }
 
+        auto variance() const {
+            return _variance;
+        }
+
+        void set_variance(double v) {
+            _variance = v;
+        }
+
         bool operator!=(const qvar_t& other) const {
             return _cnt != other._cnt || _avg != other._avg;
         }
@@ -129,16 +137,15 @@ namespace prlearn {
         static qvar_t approximate(const qvar_t& a, const qvar_t& b);
     };
 
-    struct rqvar_t : public qvar_t {
+    struct rqvar_t : protected qvar_t {
         using qvar_t::qvar_t;
+        using qvar_t::avg;
+        using qvar_t::cnt;
+        using qvar_t::variance;
+        using qvar_t::set_variance;
         rqvar_t(qvar_t);
         // this is a dirty hijack!
         rqvar_t& operator+=(double d);
-        void addPoints(double weight, double d);
-
-        bool operator!=(const rqvar_t& other) const {
-            return _cnt != other._cnt || _avg != other._avg;
-        }
         static rqvar_t approximate(const rqvar_t& a, const rqvar_t& b) {
             return rqvar_t(qvar_t::approximate(a, b));
         }
