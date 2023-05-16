@@ -65,9 +65,10 @@ namespace prlearn {
         else
         {
             const auto frac = 1.0/std::max(std::sqrt(_cnt), std::min(2.0, _cnt));
-            _avg = ((1.0-frac)*_avg) + (frac * d);
-            _sq = ((1.0 - frac) * _sq ) + (frac * std::pow(d, 2.0));
+            _avg = ((1.0 - frac) * _avg) + (frac * d);
             ++_cnt;
+            const auto sqfrac = 1.0/_cnt;
+            _sq =  ((1.0 - sqfrac) * _sq ) + (sqfrac * std::pow(d, 2.0));
         }
         return *this;
     }
