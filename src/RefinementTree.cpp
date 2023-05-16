@@ -179,8 +179,8 @@ namespace prlearn {
             }
 
             // update the split-filters
-            _predictor._data[i]._splitfilter.add(_predictor._data[i]._lowq,
-                    _predictor._data[i]._highq,
+            _predictor._data[i]._splitfilter.add(_predictor._data[i]._lowq.as_qvar(),
+                    _predictor._data[i]._highq.as_qvar(),
                     delta * options._indefference,
                     options._lower_t,
                     options._upper_t,
@@ -263,7 +263,7 @@ namespace prlearn {
                         dp._midpoint += nm;
 
                         // merge Q-values. TODO: See if this cannot be done better.
-                        dp._lowq = qvar_t::approximate(dp._lowq, dp._highq);
+                        dp._lowq = rqvar_t::approximate(dp._lowq, dp._highq);
                         dp._lowq.cnt() /= 2;
                         dp._highq = dp._lowq;
                     }

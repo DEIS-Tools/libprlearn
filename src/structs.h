@@ -164,6 +164,8 @@ namespace prlearn {
         static rqvar_t approximate(const rqvar_t& a, const rqvar_t& b) {
             return rqvar_t(qvar_t::approximate(a, b));
         }
+
+        const qvar_t& as_qvar() const { return *this; }
     };
 
 
