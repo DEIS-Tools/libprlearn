@@ -85,7 +85,7 @@ namespace prlearn {
                 if (!std::isinf(v) && !std::isnan(v))
                     val = minimization ?
                         std::min(v, val) :
-                    std::max(v, val);
+                        std::max(v, val);
             }
         }
         else {
@@ -237,6 +237,8 @@ namespace prlearn {
                     nodes[shigh]._predictor._q.set_variance(0);
                 }
             }
+            nodes[shigh]._predictor._q.cnt() = std::min<double>(1, nodes[shigh]._predictor._q.cnt());
+            nodes[slow]._predictor._q.cnt() = std::min<double>(1, nodes[slow]._predictor._q.cnt());
             assert(nodes[shigh]._predictor._q.cnt() > 0);
             assert(nodes[slow]._predictor._q.cnt() > 0);
         } else {
