@@ -69,7 +69,7 @@ namespace prlearn {
             _avg = ((1.0-frac)*_avg) + (frac * d);
             auto nvar = std::pow(d - _avg, 2.0) - _variance;
             ++_cnt;
-            const auto vfrac = 1 / _cnt;
+            const auto vfrac = frac; //1 / _cnt;
             _variance += vfrac * nvar;
         }
 
