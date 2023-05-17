@@ -65,7 +65,7 @@ namespace prlearn {
         }
         else
         {
-            const auto frac = 1.0 / std::max((2 + std::sqrt(_cnt/20)), std::min(3.0, _cnt + 1));
+            const auto frac = 1.0 / std::max((2 + std::sqrt(_cnt/15)), std::min(3.0, _cnt + 1));
             //const auto frac = 1.0 / std::max((2 + std::log(1 + (_cnt / 5))), std::min(3.0, (_cnt + 1)));
             //const auto frac = std::max(1.0 / (2 + std::max(std::log(1 + (_cnt/5)), 0.0)), std::min(2.0, _cnt));
             _avg += (d - _avg) * frac;
