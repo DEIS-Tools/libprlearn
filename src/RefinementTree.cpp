@@ -88,13 +88,12 @@ namespace prlearn {
             }
         }
         else {
-            size_t j = 0;
             for(size_t i = 0; i < n_labels; ++i)
             {
+                size_t j = 0;
                 for(;j < _mapping.size() && _mapping[j]._label < next_labels[i]; ++j) {};
-                if(j >= _mapping.size()) return val;
-                if(_mapping[j]._label != next_labels[i])
-                    continue;
+                if(j >= _mapping.size()) continue;
+                if(_mapping[j]._label != next_labels[i]) continue;
                 const auto& res = _mapping[j];
                 auto node = _nodes[res._nid].get_leaf(point, res._nid, _nodes);
                 auto v = _nodes[node]._predictor._q.avg();
