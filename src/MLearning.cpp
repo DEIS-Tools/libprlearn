@@ -1,24 +1,24 @@
 /*
  * Copyright Peter G. Jensen
- *  
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* 
+/*
  * File:   MLearning.cpp
  * Author: Peter G. Jensen
- * 
+ *
  * Created on July 25, 2017, 9:58 AM
  */
 
@@ -104,7 +104,8 @@ namespace prlearn {
     }
 
     void MLearning::addSample(size_t dimen, const double* f_var,
-            const double* t_var, size_t label,
+            const double* t_var, size_t*, size_t,
+            size_t label,
             size_t dest, double value, const std::vector<MLearning>& clouds,
             bool minimization, const double delta,
             const propts_t& options) {
@@ -225,7 +226,7 @@ namespace prlearn {
         }
     }
 
-    void MLearning::update(const std::vector<MLearning>&, bool) 
+    void MLearning::update(const std::vector<MLearning>&, bool)
     {
     }
 
@@ -254,10 +255,10 @@ namespace prlearn {
                     auto c = clouds[s._cloud]._nodes[s._nodes[i]]._q.avg();
                     fut = std::min(fut, c);
                     if (c == best)
-                        var = std::min(var, clouds[s._cloud]._nodes[s._nodes[i]]._q._variance);
+                        var = std::min(var, clouds[s._cloud]._nodes[s._nodes[i]]._q.variance());
                     else if ((c < best && minimize) || (c > best && !minimize)) {
                         best = c;
-                        var = clouds[s._cloud]._nodes[s._nodes[i]]._q._variance;
+                        var = clouds[s._cloud]._nodes[s._nodes[i]]._q.variance();
                     }
                 }
             }
@@ -274,8 +275,8 @@ namespace prlearn {
                     auto v = s._variance[d];
                     v.first.avg() += best;
                     v.second.avg() += best;
-                    v.first._variance = std::max(v.first._variance, var);
-                    v.second._variance = std::max(v.second._variance, var);
+                    v.first.set_variance(std::max(v.first.variance(), var));
+                    v.second.set_variance(std::max(v.second.variance(), var));
                     tmpq[d].first.addPoints(v.first.cnt(), v.first.avg());
                     tmpq[d].second.addPoints(v.second.cnt(), v.second.avg());
                     mean.addPoints(v.first.cnt(), v.first.avg());
@@ -287,8 +288,8 @@ namespace prlearn {
                     auto v = s._old[d];
                     v.first.avg() += best;
                     v.second.avg() += best;
-                    v.first._variance = std::max(v.first._variance, var);
-                    v.second._variance = std::max(v.second._variance, var);
+                    v.first.set_variance(std::max(v.first.variance(), var));
+                    v.second.set_variance(std::max(v.second.variance(), var));
                     old_mean.addPoints(v.first.cnt(), v.first.avg());
                     old_mean.addPoints(v.second.cnt(), v.second.avg());
                     old_var.push_back(v.first);
@@ -304,7 +305,7 @@ namespace prlearn {
         for (auto& s : sample_qvar) {
             {
                 const auto dif = std::abs(s.avg() - mean._avg);
-                const auto std = std::sqrt(s._variance);
+                const auto std = std::sqrt(s.variance());
                 auto var = (std::pow(dif + std, 2.0) + std::pow(dif - std, 2.0)) / 2.0;
                 svar.addPoints(s.cnt(), var);
             }
@@ -316,7 +317,7 @@ namespace prlearn {
             }
             {
                 const auto dif = std::abs(s.avg() - dmin);
-                const auto std = std::sqrt(s._variance);
+                const auto std = std::sqrt(s.variance());
                 auto var = (std::pow(dif + std, 2.0) + std::pow(dif - std, 2.0)) / 2.0;
                 vars[id].addPoints(s.cnt(), var);
             }
@@ -327,18 +328,20 @@ namespace prlearn {
 
         for (auto& s : old_var) {
             const auto dif = std::abs(s.avg() - old_mean._avg);
-            const auto std = std::sqrt(s._variance);
+            const auto std = std::sqrt(s.variance());
             auto var = (std::pow(dif + std, 2.0) + std::pow(dif - std, 2.0)) / 2.0;
             ovar.addPoints(s.cnt(), var);
         }
 
         for (size_t i = 0; i < dimen; ++i) {
-            tmpq[i].first._variance = vars[i]._avg;
-            tmpq[i].second._variance = vars[i + dimen]._avg;
+            tmpq[i].first.set_variance(vars[i]._avg);
+            tmpq[i].second.set_variance(vars[i + dimen]._avg);
         }
 
-        qvar_t nq(mean._avg, mean._cnt / (dimen * 2), svar._avg);
-        qvar_t oq(old_mean._avg, old_mean._cnt / (dimen * 2), ovar._avg);
+        qvar_t nq(mean._avg, mean._cnt / (dimen * 2), 0);
+        nq.set_variance(svar._avg);
+        qvar_t oq(old_mean._avg, old_mean._cnt / (dimen * 2), 0);
+        oq.set_variance(ovar._avg);
         return std::make_pair(nq, oq);
     }
 

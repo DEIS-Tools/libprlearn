@@ -1,22 +1,22 @@
 /*
  * Copyright Peter G. Jensen
- *  
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 
-/* 
+/*
  * File:   MLearning.h
  * Author: Peter G. Jensen
  *
@@ -32,7 +32,7 @@
 #include <map>
 #include <limits>
 
-namespace prlearn { 
+namespace prlearn {
 
     class MLearning {
     public:
@@ -45,6 +45,7 @@ namespace prlearn {
 
         void addSample(size_t dimen, // dimensions
                 const double* f_var, const double* t_var, // doubles
+                size_t* next_labels, size_t n_labels, // actions in dest, ignored in m learning
                 size_t label, // edge chosen, edge taken
                 size_t dest, double value, // cost
                 const std::vector<MLearning>& clouds, // other points

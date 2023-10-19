@@ -1,21 +1,21 @@
 /*
  * Copyright Peter G. Jensen
- *  
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* 
+/*
  * File:   structs.cpp
  * Author: Peter G. Jensen
  *
@@ -44,7 +44,7 @@ namespace prlearn {
     void qvar_t::print(std::ostream& stream) const {
         stream << "[";
         stream << (*(avg_t*)this);
-        stream << ", " << _variance << "]";
+        stream << ", " << variance() << "]";
     }
 
     std::ostream& operator<<(std::ostream& o, const qvar_t& v) {
@@ -59,29 +59,15 @@ namespace prlearn {
             return a;
         qvar_t res = a;
         res.addPoints(b._cnt, b._avg);
-        const auto adif = std::abs(res._avg - a._avg);
-        const auto bdif = std::abs(res._avg - b._avg);
-        const auto astd = std::sqrt(a._variance);
-        const auto bstd = std::sqrt(b._variance);
-        auto ca = std::pow(adif + astd, 2.0) + std::pow(adif - astd, 2.0);
-        auto cb = std::pow(bdif + bstd, 2.0) + std::pow(bdif - bstd, 2.0);
-        avg_t tmp;
-        tmp.addPoints(a._cnt, ca / 2.0);
-        tmp.addPoints(b._cnt, cb / 2.0);
-        res._variance = tmp._avg;
+        res._sq = (a._sq * (a._cnt / res._cnt)) + (b._sq * (b._cnt / res._cnt));
         return res;
     }
 
     qvar_t& qvar_t::operator+=(double d) {
         assert(!std::isinf(d));
         avg_t::operator+=(d);
-        auto nvar = std::pow(d - _avg, 2.0);
-        assert(!std::isinf(nvar));
-        if (_cnt == 1) _variance = nvar;
-        else {
-            nvar -= _variance;
-            _variance += nvar / _cnt;
-        }
+        auto diff = std::pow(d, 2.0) - _sq;
+        _sq += diff / _cnt;
         return *this;
     }
 
@@ -89,18 +75,9 @@ namespace prlearn {
         assert(weight >= 0);
         assert(_cnt >= 0);
         if (weight == 0) return;
-        auto oa = _avg;
         avg_t::addPoints(weight, d);
-        auto nvar = std::abs((d - oa)*(d - _avg));
-        assert(!std::isinf(nvar));
-        if (_cnt == weight) _variance = nvar;
-        else {
-            nvar -= _variance;
-            _variance += (nvar * weight) / _cnt;
-        }
-        assert(_variance >= 0);
-        assert(!std::isnan(_variance));
-        assert(!std::isinf(_variance));
+        auto diff = std::pow(d, 2.0) - _sq;
+        _sq += diff * (weight / _cnt);
     }
 
     double triangular_cdf(double mid, double width, double point) {
@@ -117,10 +94,10 @@ namespace prlearn {
         constexpr double minvar = 0.0001;
         if (std::min(a.cnt(), b.cnt()) <= 1)
             return;
-        if (a._variance == b._variance && a.avg() == b.avg())
+        if (a.variance() == b.variance() && a.avg() == b.avg())
             return;
-        auto vara = std::max(minvar, a._variance);
-        auto varb = std::max(minvar, b._variance);
+        auto vara = std::max(minvar, a.variance());
+        auto varb = std::max(minvar, b.variance());
 
         double tval = std::abs(a.avg() - b.avg()) / std::sqrt(((vara * a.cnt()) + (varb * b.cnt())) / (a.cnt() * b.cnt()));
 
