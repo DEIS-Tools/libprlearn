@@ -1,0 +1,87 @@
+---
+name: Build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.runner }}
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/CCACHE
+      CMAKE_GENERATOR: Ninja
+      CMAKE_BUILD_TYPE: Debug
+      CTEST_OUTPUT_ON_FAILURE: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-linux-cc
+            runner: ubuntu-latest
+            tools-install: |
+              sudo apt-get -qq update
+              sudo apt-get -qq install cmake ninja-build ccache g++ libboost-dev
+          - target: x86_64-darwin-cc
+            runner: macos-11
+            xcode: '13.2.1'
+            tools-install: |
+              brew install bash coreutils cmake ninja ccache boost
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v3
+
+      - name: Install Build Tools
+        run: ${{ matrix.tools-install }}
+
+      - name: Setup Xcode (macOS)
+        if: ${{ matrix.xcode }}
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ matrix.xcode }}
+      - name: Setup Environment
+        run: |
+          TARGET=${{ matrix.target }}
+          WORKSPACE=${{ github.workspace }}
+          echo "TARGET=$TARGET" >> $GITHUB_ENV
+          # echo "CMAKE_TOOLCHAIN_FILE=$WORKSPACE/cmake/toolchain/$TARGET.cmake" >> $GITHUB_ENV
+          echo "CMAKE_INSTALL_PREFIX=$WORKSPACE/$TARGET" >> $GITHUB_ENV
+          echo "BUILD_DIR=build-$TARGET" >> $GITHUB_ENV
+
+      - name: Compute CCache Keys
+        id: ccache-keys
+        run: |
+          key2=ccache-${{env.TARGET}}-
+          key1="${key2}$(date +%V)"
+          echo "key1=${key1}" >> $GITHUB_OUTPUT
+          echo "key2=${key2}" >> $GITHUB_OUTPUT
+
+      - name: Restore CCache
+        id: ccache-restore
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ steps.ccache-keys.outputs.key1 }}
+          restore-keys: ${{ steps.ccache-keys.outputs.key2 }}
+
+      - name: CCache Ready Stats
+        run: ccache --show-stats
+
+      - name: Configure
+        run: cmake -B "$BUILD_DIR" -S . -DFIND_FATAL=ON
+      - name: Compile
+        run: cmake --build "$BUILD_DIR" --config $CMAKE_BUILD_TYPE
+      - name: Test
+        if: ${{ ! matrix.test-disable }}
+        run: ctest --test-dir "$BUILD_DIR" --config $CMAKE_BUILD_TYPE
+      - name: Install
+        run: cmake --install "$BUILD_DIR" --config $CMAKE_BUILD_TYPE --prefix "$CMAKE_INSTALL_PREFIX"
+      - name: Display Assets
+        working-directory: ${{ env.CMAKE_INSTALL_PREFIX }}
+        run: ls -R
+
+      - name: CCache Show Stats
+        run: ccache --show-stats
