@@ -13,7 +13,7 @@ jobs:
     env:
       CCACHE_DIR: ${{ github.workspace }}/CCACHE
       CMAKE_GENERATOR: Ninja
-      CMAKE_BUILD_TYPE: Release
+      CMAKE_BUILD_TYPE: Debug
       CTEST_OUTPUT_ON_FAILURE: 1
     strategy:
       fail-fast: false
@@ -69,7 +69,7 @@ jobs:
 
       - name: CCache Ready Stats
         run: ccache --show-stats
-        
+
       - name: Configure
         run: cmake -B "$BUILD_DIR" -S . -DFIND_FATAL=ON
       - name: Compile
