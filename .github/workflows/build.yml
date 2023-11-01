@@ -14,7 +14,7 @@ jobs:
       CCACHE_DIR: ${{ github.workspace }}/CCACHE
       CMAKE_GENERATOR: Ninja
       CMAKE_BUILD_TYPE: Release
-      CTEST_OUTPUT_ON_FAILURE: 1      
+      CTEST_OUTPUT_ON_FAILURE: 1
     strategy:
       fail-fast: false
       matrix:
@@ -23,12 +23,12 @@ jobs:
             runner: ubuntu-latest
             tools-install: |
               sudo apt-get -qq update
-              sudo apt-get -qq install cmake ninja-build ccache g++
+              sudo apt-get -qq install cmake ninja-build ccache g++ libboost-dev
           - target: x86_64-darwin-cc
             runner: macos-11
             xcode: '13.2.1'
             tools-install: |
-              brew install bash coreutils cmake ninja ccache
+              brew install bash coreutils cmake ninja ccache boost
 
     steps:
       - name: Checkout Source
