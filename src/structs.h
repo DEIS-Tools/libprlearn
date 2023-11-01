@@ -132,16 +132,13 @@ namespace prlearn {
             auto pow = std::pow(_avg, 2.0);
             if(pow >= _sq)
                 return 0;
-            return _sq - pow;
+            auto var = std::sqrt(_sq - pow);
+            return var;
         }
 
-        void set_variance(double var) {
-            _sq = std::pow(_avg, 2.0) + var;
-        }
-
-       double& squared() {
+        double& squared() {
             return _sq;
-       }
+        }
 
         const double& squared() const {
             return _sq;

@@ -242,11 +242,13 @@ namespace prlearn {
         avg_t mean, old_mean;
         std::vector<qvar_t> sample_qvar;
         std::vector<qvar_t> old_var;
+        avg_t svar, ovar;
+
         double fut = 0;
         for (auto& s : _samples) {
             auto best = minimize ? std::numeric_limits<double>::infinity() :
                     -std::numeric_limits<double>::infinity();
-            double var = 0;
+            double squared = 0;
             if (s._size == 0 || s._cloud == 0 || discount == 0) {
                 best = 0;
             } else {
@@ -255,10 +257,10 @@ namespace prlearn {
                     auto c = clouds[s._cloud]._nodes[s._nodes[i]]._q.avg();
                     fut = std::min(fut, c);
                     if (c == best)
-                        var = std::min(var, clouds[s._cloud]._nodes[s._nodes[i]]._q.variance());
+                        squared = std::min(squared, clouds[s._cloud]._nodes[s._nodes[i]]._q.squared());
                     else if ((c < best && minimize) || (c > best && !minimize)) {
                         best = c;
-                        var = clouds[s._cloud]._nodes[s._nodes[i]]._q.variance();
+                        squared = clouds[s._cloud]._nodes[s._nodes[i]]._q.squared();
                     }
                 }
             }
@@ -269,14 +271,14 @@ namespace prlearn {
             best *= discount;
             // dont look too far into the future for the variance.
             // if we do, it will grow in horrible ways and be useless.
-            var *= std::min(0.5, discount);
+            squared *= std::min(0.5, discount);
             for (size_t d = 0; d < dimen; ++d) {
                 if (s._variance) {
                     auto v = s._variance[d];
                     v.first.avg() += best;
                     v.second.avg() += best;
-                    v.first.set_variance(std::max(v.first.variance(), var));
-                    v.second.set_variance(std::max(v.second.variance(), var));
+                    v.first.squared() = std::max(v.first.squared(), squared);
+                    v.second.squared() = std::max(v.second.squared(), squared);
                     tmpq[d].first.addPoints(v.first.cnt(), v.first.avg());
                     tmpq[d].second.addPoints(v.second.cnt(), v.second.avg());
                     mean.addPoints(v.first.cnt(), v.first.avg());
@@ -288,8 +290,8 @@ namespace prlearn {
                     auto v = s._old[d];
                     v.first.avg() += best;
                     v.second.avg() += best;
-                    v.first.set_variance(std::max(v.first.variance(), var));
-                    v.second.set_variance(std::max(v.second.variance(), var));
+                    v.first.squared() = std::max(v.first.squared(), squared);
+                    v.second.squared() = std::max(v.second.squared(), squared);
                     old_mean.addPoints(v.first.cnt(), v.first.avg());
                     old_mean.addPoints(v.second.cnt(), v.second.avg());
                     old_var.push_back(v.first);
@@ -298,50 +300,32 @@ namespace prlearn {
             }
         }
 
-        avg_t svar, ovar;
+
         auto vars = std::make_unique < avg_t[]>(dimen * 2);
         bool first = true;
         size_t dimcnt = 0;
         for (auto& s : sample_qvar) {
-            {
-                const auto dif = std::abs(s.avg() - mean._avg);
-                const auto std = std::sqrt(s.variance());
-                auto var = (std::pow(dif + std, 2.0) + std::pow(dif - std, 2.0)) / 2.0;
-                svar.addPoints(s.cnt(), var);
-            }
             auto id = dimcnt;
-            auto dmin = tmpq[id].first.avg();
             if (!first) {
-                dmin = tmpq[dimcnt].second.avg();
                 id = dimen + dimcnt;
             }
-            {
-                const auto dif = std::abs(s.avg() - dmin);
-                const auto std = std::sqrt(s.variance());
-                auto var = (std::pow(dif + std, 2.0) + std::pow(dif - std, 2.0)) / 2.0;
-                vars[id].addPoints(s.cnt(), var);
-            }
+            vars[id].addPoints(s.cnt(), s.squared());
             if (!first)
                 dimcnt = (dimcnt + 1) % dimen;
             first = !first;
+            svar.addPoints(s.cnt(), s.squared());
         }
 
-        for (auto& s : old_var) {
-            const auto dif = std::abs(s.avg() - old_mean._avg);
-            const auto std = std::sqrt(s.variance());
-            auto var = (std::pow(dif + std, 2.0) + std::pow(dif - std, 2.0)) / 2.0;
-            ovar.addPoints(s.cnt(), var);
-        }
+        for (auto& s : old_var)
+            ovar.addPoints(s.cnt(), s.squared());
 
         for (size_t i = 0; i < dimen; ++i) {
-            tmpq[i].first.set_variance(vars[i]._avg);
-            tmpq[i].second.set_variance(vars[i + dimen]._avg);
+            tmpq[i].first.squared() = vars[i]._avg;
+            tmpq[i].second.squared() = vars[i + dimen]._avg;
         }
 
-        qvar_t nq(mean._avg, mean._cnt / (dimen * 2), 0);
-        nq.set_variance(svar._avg);
-        qvar_t oq(old_mean._avg, old_mean._cnt / (dimen * 2), 0);
-        oq.set_variance(ovar._avg);
+        qvar_t nq(mean._avg, mean._cnt / (dimen * 2), svar._avg);
+        qvar_t oq(old_mean._avg, old_mean._cnt / (dimen * 2), ovar._avg);
         return std::make_pair(nq, oq);
     }
 
