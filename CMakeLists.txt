@@ -3,6 +3,15 @@ cmake_minimum_required(VERSION 3.7)
 cmake_policy(SET CMP0048 NEW)
 
 project(libprlearn VERSION 1.0.0 LANGUAGES CXX)
+
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE_PROGRAM})
+  message(STATUS "Enabled ccache: ${CCACHE_PROGRAM}")
+else(CCACHE_PROGRAM)
+  message(STATUS "Failed to find ccache")
+endif(CCACHE_PROGRAM)
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif(NOT CMAKE_BUILD_TYPE)
